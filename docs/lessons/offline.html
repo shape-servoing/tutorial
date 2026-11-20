@@ -1,0 +1,28 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>The control law requires an initial Jacobian estimate <span class="tex">\vJh_0</span>. To obtain it, the robot applies small perturbations around its initial configuration <span class="tex">\vq_0</span> along a set of independent actuation directions. For <span class="tex">C</span> exploratory motions, the action and response of motion <span class="tex">c</span> are <span class="tex">\dq_c=\vq_c-\vq_0</span> and <span class="tex">\ds_c=\vs_c-\vs_0</span>, stacked as the columns of <span class="tex">\dQ\in\R^{m\times C}</span> and <span class="tex">\dS\in\R^{n\times C}</span>. For sufficiently small motions, <span class="tex">\ds_c\approx\vJ\dq_c</span>, so the initial estimate is obtained by least-squares regression:</p>
+    <div class="tex-block">\vJh_0=\arg\min_{\vJ}\big\lVert \dS-\vJ\dQ \big\rVert_F^2=\dS\dQ^{+}.</div>
+    <p>If the exploratory motions span the input space, <span class="tex">\dQ</span> has full row rank and the solution is unique. The probing amplitude must be small enough for <span class="tex">\ds_c\approx\vJ\dq_c</span> to remain valid, yet large enough for the feature changes to exceed measurement noise. The residual <span class="tex">\norm{\dS-\vJh_0\dQ}_F</span> quantifies how well a single linear map explains the collected responses.</p>
+    <p>In the running example, four signed perturbations along each of the six gripper DoFs give <span class="tex">C=24</span> pairs, and <span class="tex">\dQ</span> is block diagonal. The residual <span class="tex">\approx0.31</span> is about <span class="tex">18\%</span> of <span class="tex">\norm{\dS}_F\approx1.72</span>, and <span class="tex">\vJh_0</span> has full column rank and a condition number of about 17.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>Press <em>Probe &amp; fit</em> with the default settings: the residual is about 18% of <span class="tex">\norm{\dS}_F</span>.</li>
+        <li>Increase the amplitude to ×3: the residual grows, because a single linear map no longer fits the larger, nonlinear responses.</li>
+        <li>Add measurement noise and reduce the amplitude: the error of <span class="tex">\vJh_0</span> grows. <em>Sweep amplitudes</em> shows the trade-off between the two effects.</li>
+        <li>With one probe per coordinate (<span class="tex">C=6</span>), the residual is zero, yet <span class="tex">\vJh_0</span> is not exact.</li>
+        <li>In the model card, change the bending stiffness or the weight of the model rod: the model-based estimate requires no probing but inherits the model error.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>A small residual supports the estimate only near <span class="tex">\vq_0</span>. As the object deforms, the estimate must be updated (Demo 04).</p>
+</section>
+
+<details>
+    <summary>Initialization from a model</summary>
+    <p>The Jacobian estimate can also be informed by a mechanical, geometric, or learned model of the object–robot system, either analytically or by applying small perturbations to the model and measuring the predicted feature changes. The model-derived estimate can initialize <span class="tex">\vJh_0</span> and then be refined online with the Broyden update. Relating the model to the robot and perception system may require camera calibration, object geometry and mechanical parameters, grasp locations and constraints, and the available actuation DoFs, whose errors also affect the estimate.</p>
+    <p>In this demo, the model is the same rod simulation with a scaled bending stiffness and weight.</p>
+</details>

@@ -1,0 +1,28 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>Shape servoing is the automatic manipulation of a deformable object toward a desired shape. Let <span class="tex">\vx</span> denote the full configuration of the object, here the 25 nodes of the rod. Sensors provide measurements <span class="tex">\vy</span>, and a feature map <span class="tex">\vs=f(\vy)\in\R^{n}</span> extracts the shape representation used for control.</p>
+    <p>In the running example, perception tracks <span class="tex">P=5</span> material points along the rod (yellow) and stacks their image coordinates as <span class="tex">\vs=[x_1,y_1,\dots,x_5,y_5]^{\top}</span>, so <span class="tex">n=10</span>. Given the target <span class="tex">\vs^{*}</span> (grey rings on the dashed shape), the shape error is</p>
+    <div class="tex-block">\ve(t)=\vs^{*}-\vs\big(\vy(t)\big).</div>
+    <p>Each arrow on the rod shows the error of one point, that is, two entries of <span class="tex">\ve</span>.</p>
+    <p>The robot coordinates are the gripper poses <span class="tex">\vq=[x_L,y_L,\theta_L,x_R,y_R,\theta_R]^{\top}</span>, so <span class="tex">m=6</span>. Manipulation is quasistatic: after a small robot motion, the rod settles to the equilibrium that minimizes its total potential energy, so the features can be written as <span class="tex">\vs=\vs(\vq)</span>.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>Drag the left gripper (violet) and note which error arrows change the most.</li>
+        <li>Drag the ring above a gripper to rotate it, which changes <span class="tex">\theta_L</span> or <span class="tex">\theta_R</span>. Drag the rod itself to move both grippers together.</li>
+        <li>Reduce <span class="tex">\norm{\ve}</span> below 10% of its initial value by hand, and count the corrections you need.</li>
+        <li>Compare the dimensions: <span class="tex">m=6</span> robot coordinates and <span class="tex">n=10</span> error entries.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>The controller uses only the reduced description <span class="tex">\vs</span>, not <span class="tex">\vx</span>. To reduce <span class="tex">\ve</span> without trial and error, it needs the relation between robot motion and the change of <span class="tex">\vs</span>: the deformation Jacobian of Demo 02.</p>
+</section>
+
+<details>
+    <summary>Correspondence and the scope of the tutorial</summary>
+    <p>Coordinate-based features require a consistent correspondence between the current and target representations: corresponding entries of <span class="tex">\vs</span> and <span class="tex">\vs^{*}</span> refer to the same material locations throughout the deformation.</p>
+    <p>The tutorial assumes quasistatic, velocity-level manipulation; measurable shape feedback; and a continuous manipulation regime, in which contacts, topology, and the deformation regime do not change discontinuously during the task.</p>
+</details>

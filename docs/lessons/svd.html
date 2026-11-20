@@ -1,0 +1,27 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>The singular value decomposition (SVD) of the estimate,</p>
+    <div class="tex-block">\vJh=\boldsymbol{\Phi}\boldsymbol{\Sigma}\boldsymbol{\Psi}^{\top}=\textstyle\sum_{l}\sigma_l\,\vphi_l\vpsi_l^{\top},</div>
+    <p>pairs robot-motion directions with feature directions: according to the estimate, a unit robot velocity along <span class="tex">\vpsi_l</span> produces the feature velocity <span class="tex">\sigma_l\vphi_l</span>. The number of nonzero singular values, the rank of <span class="tex">\vJh</span>, is the number of independent feature directions that the robot can vary locally. The <span class="tex">\vphi_l</span> with <span class="tex">\sigma_l>0</span> span <span class="tex">\Range(\vJh)</span>, and the <span class="tex">\vpsi_l</span> not paired with a nonzero singular value span <span class="tex">\Null(\vJh)</span>.</p>
+    <p>The pseudoinverse inverts each nonzero gain separately,</p>
+    <div class="tex-block">\vJh^{+}=\sum_{\sigma_l>0}\frac{1}{\sigma_l}\,\vpsi_l\vphi_l^{\top},</div>
+    <p>so, for each error component <span class="tex">\vphi_l^{\top}\ve</span>, the control law commands the robot velocity <span class="tex">\alpha\,\vphi_l^{\top}\ve/\sigma_l</span> along <span class="tex">\vpsi_l</span>: an error along a weak feature direction produces a large command. The manipulability and the condition number,</p>
+    <div class="tex-block">w=\textstyle\prod_l \sigma_l,\qquad \cond=\sigma_{\max}/\sigma_{\min},</div>
+    <p>characterize the overall responsiveness and the directional anisotropy of the estimate. Both depend on units and scaling: expressing angles in degrees rescales the corresponding columns and changes the singular values, so comparisons require consistent units or a normalization <span class="tex">\vW_{\vs}\vJh\vW_{\vq}^{-1}</span>. Each pair <span class="tex">(\vphi_l,\vpsi_l)</span> can be multiplied by <span class="tex">-1</span>, and when two singular values are nearly equal, only the subspace spanned by the corresponding vectors is well defined.</p>
+    <p>In the running example, <span class="tex">\vJh_0</span> has full column rank and <span class="tex">\cond\approx17</span>. The two strongest directions (<span class="tex">\sigma_1=2.54</span>, <span class="tex">\sigma_2=1.58</span>) move all five points upward and sideways, respectively, and the third rotates the rod about its center. The weakest direction (<span class="tex">\sigma_6=0.15</span>) bends the rod into an S-shape and is driven mainly by the wrist rotations.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>Click rows <span class="tex">l=1</span> and <span class="tex">l=2</span>: the robot moves along <span class="tex">\vpsi_l</span>, and all points move in the same direction.</li>
+        <li>Click <span class="tex">l=6</span>: the rod bends into an S-shape, and the bars at <span class="tex">\theta_L</span> and <span class="tex">\theta_R</span> are the largest.</li>
+        <li>In the bar chart of <span class="tex">1/\sigma_l</span>, an error along <span class="tex">\vphi_6</span> commands about 17 times the robot velocity of an equal error along <span class="tex">\vphi_1</span>.</li>
+        <li>Switch the angles to degrees: the singular values and the condition number change, although the robot and the rod are the same.</li>
+        <li>Drag the grippers apart until the rod is taut, and observe how <span class="tex">\sigma_6</span> decreases (Demo 10).</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>The SVD determines which shape changes the robot can produce with small motions, which require large motions, and which cannot be produced locally. Because the pseudoinverse divides by the singular values, the weakest directions produce the largest commands.</p>
+</section>

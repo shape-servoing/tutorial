@@ -1,0 +1,28 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>Because the shape features depend on the object configuration, which in turn depends on the robot coordinates, the chain rule gives the deformation Jacobian</p>
+    <div class="tex-block">\vJ(\vq)=\frac{\partial \vs}{\partial \vx}\frac{\partial \vx}{\partial \vq}=\frac{\partial \vs}{\partial \vq}\in\R^{n\times m}.</div>
+    <p>The factor <span class="tex">\partial\vx/\partial\vq</span> describes how robot motion changes the object configuration, and <span class="tex">\partial\vs/\partial\vx</span> how these changes are reflected in the selected features. With <span class="tex">\dot{\vq}=\vu</span>, the local input–output relation becomes</p>
+    <div class="tex-block">\dot{\vs}=\vJ(\vq)\dot{\vq}=\vJ(\vq)\vu.</div>
+    <p>The <span class="tex">j</span>th column of <span class="tex">\vJ</span> is the feature velocity produced by a unit velocity of robot coordinate <span class="tex">q_j</span>. In the running example, <span class="tex">\vJ\in\R^{10\times6}</span>, and for a small increment <span class="tex">\ds\approx\vJ\dq</span>.</p>
+    <p>Unlike in visual servoing, <span class="tex">\vJ</span> is not determined solely by a known geometric projection, but also by the configuration-dependent mechanical response of the object: the same gripper motion can produce very different shape changes when the rod is slack and when it is taut.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>Click the <span class="tex">\theta_L</span> column of <span class="tex">\vJ</span>. Which tracked points does a rotation of the left wrist move the most?</li>
+        <li>Increase <span class="tex">\dq</span> until the predicted arrows <span class="tex">\vJ\dq</span> and the measured changes <span class="tex">\ds</span> separate (see the legend). The plot shows the linearization error growing with the step size.</li>
+        <li>Switch between <em>Slack</em> and <em>Taut</em> with the same <span class="tex">\dq</span>, and compare the responses and the columns of <span class="tex">\vJ</span>.</li>
+        <li>Drag a gripper: <span class="tex">\vJ</span> is recomputed at each configuration.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p><span class="tex">\vJ</span> is a local model: accurate for small motions around the current configuration, and different at every configuration. The demo computes it exactly from the simulation; on a real system it is unknown and must be estimated from data (Demo 03).</p>
+</section>
+
+<details>
+    <summary>How the demo computes J</summary>
+    <p>Each column <span class="tex">j</span> is a central difference of the simulated equilibrium, <span class="tex">\big(\vs(\vq+\varepsilon\mathbf{e}_j)-\vs(\vq-\varepsilon\mathbf{e}_j)\big)/2\varepsilon</span> with <span class="tex">\varepsilon=10^{-3}</span>, which requires evaluating the simulation without moving the robot. Applied to a mechanical model <span class="tex">\vg:\vq\mapsto\vs</span>, the same function gives the model-based initial estimate of the tutorial.</p>
+</details>

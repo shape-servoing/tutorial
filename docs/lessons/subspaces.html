@@ -1,0 +1,41 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">The local geometry behind Sections IV-B and IV-C</p>
+    <p>The deformation Jacobian maps robot velocity to feature velocity, <span class="tex">\dot{\vs}=\vJ\vu</span>. Its four fundamental subspaces answer two different questions:</p>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Space</th><th>Active directions</th><th>Null directions</th></tr></thead>
+            <tbody>
+                <tr><td>feature space <span class="tex">\R^n</span></td><td><span class="tex">\Range(\vJ)</span>: locally producible feature changes</td><td><span class="tex">\Null(\vJ^{\top})</span>: locally non-reducible error</td></tr>
+                <tr><td>robot space <span class="tex">\R^m</span></td><td><span class="tex">\Range(\vJ^{\top})</span>: motion that changes the task</td><td><span class="tex">\Null(\vJ)</span>: motion invisible to the selected features</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Feature error when n &gt; m</p>
+    <p>With ten point-coordinate features and six robot DoFs, the exact local error decomposition is</p>
+    <div class="tex-block">\ve=\underbrace{\vJ\vJ^{+}\ve}_{\ve_{\parallel}\in\Range(\vJ)}+\underbrace{(\mathbf I-\vJ\vJ^{+})\ve}_{\ve_{\perp}\in\Null(\vJ^{\top})}.</div>
+    <p>The pseudoinverse command reacts only to <span class="tex">\ve_{\parallel}</span>. The orthogonal component satisfies <span class="tex">\vJ^{\top}\ve_{\perp}=\mathbf0</span> and remains as the local least-squares residual. This is a local statement: the tangent space does not by itself establish global target feasibility or reachability.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Robot motion when n &lt; m</p>
+    <p>Sections II–IV of the tutorial use point-coordinate features. Tracking only two points gives <span class="tex">\vs=[x_1,y_1,x_2,y_2]^{\top}</span>, so <span class="tex">n=4&lt;m=6</span>, and a robot motion decomposes as</p>
+    <div class="tex-block">\dq=\underbrace{\vJ^{+}\vJ\dq}_{\dq_{\mathrm{task}}\in\Range(\vJ^{\top})}+\underbrace{(\mathbf I-\vJ^{+}\vJ)\dq}_{\dq_{\mathrm{null}}\in\Null(\vJ)}.</div>
+    <p>The red ghost motion changes the grippers and the untracked parts of the rod, but the first-order displacement of both tracked points is zero. Such null-space freedom can support secondary tasks without disturbing the selected point-position task locally. Richer shape descriptors are introduced later, in Section VI.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>In <em>Feature error</em>, set the non-reducible component to zero. The target error lies entirely in <span class="tex">\Range(\vJ)</span> and the aqua arrows (reducible component) reach every target ring.</li>
+        <li>Restore the red component, then set the reducible component to zero. The pseudoinverse command becomes zero even though the feature error is nonzero.</li>
+        <li>Switch to <em>Two points</em>. Set the task-producing motion to zero and increase the null motion: the grippers move, while the displacement of the two tracked points stays near zero.</li>
+        <li>Combine both robot-motion components and verify geometrically that they add orthogonally in the lower diagram.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p><span class="tex">\Range(\vJ)</span> and <span class="tex">\Null(\vJ^{\top})</span> split feature error; <span class="tex">\Range(\vJ^{\top})</span> and <span class="tex">\Null(\vJ)</span> split robot motion. These local subspaces explain both least-squares residuals and redundant motions that preserve the selected point positions.</p>
+</section>

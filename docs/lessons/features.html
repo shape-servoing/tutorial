@@ -1,0 +1,36 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>The shape features define how the measured object is represented for feedback control. A different representation changes only the feature map <span class="tex">f</span> in the perception block, but because the error <span class="tex">\ve=\vs^{*}-\vs</span> is defined in feature space, it determines which geometric quantities are regulated. Section VI of the tutorial compares three representations built from the same tracked points <span class="tex">\vp_1,\dots,\vp_P</span>:</p>
+    <ul>
+        <li><em>point coordinates</em> <span class="tex">\vs=[\vp_1^{\top},\dots,\vp_P^{\top}]^{\top}\in\R^{2P}</span>, which retain both the shape and the pose of the object (<em>extrinsic</em> features) and change with any rigid translation or rotation;</li>
+        <li><em>edge vectors</em> <span class="tex">\vd_i=\vp_{i+1}-\vp_i</span>, invariant to translation but not to rotation;</li>
+        <li><em>curvature-based features</em>, for which the discrete curvature is measured through the turning angles <span class="tex">\kappa_i</span>, the signed angles between <span class="tex">\vd_i</span> and <span class="tex">\vd_{i+1}</span>; they describe local bending and are invariant to both (<em>intrinsic</em> features).</li>
+    </ul>
+    <table class="lesson-table">
+        <thead><tr><th>Feature map</th><th><span class="tex">n</span></th><th>Transl.</th><th>Rot.</th><th>Type</th><th>Free</th></tr></thead>
+        <tbody>
+            <tr data-rep="points"><td>points <span class="tex">\vp_i</span></td><td><span class="tex">2P</span></td><td>–</td><td>–</td><td>extrinsic</td><td>nothing</td></tr>
+            <tr data-rep="edges"><td>edges <span class="tex">\vd_i</span></td><td><span class="tex">2(P-1)</span></td><td>inv.</td><td>–</td><td>mixed</td><td>translation</td></tr>
+            <tr data-rep="angles"><td>curvature <span class="tex">\kappa_i</span></td><td><span class="tex">P-2</span></td><td>inv.</td><td>inv.</td><td>intrinsic</td><td>rigid motion</td></tr>
+        </tbody>
+    </table>
+    <p>A controller can regulate only the differences that its feature vector represents: any robot velocity that moves the object only in ways to which the features are invariant lies in <span class="tex">\Null(\vJ)</span>. For curvature-based features, <span class="tex">n=P-2=3&lt;m=6</span>, so at least three robot directions lie in this null space, among them the gripper motions that translate or rotate the rod rigidly.</p>
+    <p>In the running example, a temporary disturbance, of the kind a real setup can introduce, pulls the grippers during the first 20 iterations and tends to move the rod rigidly away from the target pose. Point coordinates register this drift as an error, so the loop resists it and, once the disturbance stops, returns the rod to the target pose. Edge vectors ignore translations, and curvature-based features also ignore rotations, so the loop leaves that part of the drift uncorrected: the rod reaches the target shape shifted, or shifted and rotated.</p>
+    <p>Feature choice also affects the path that the object follows toward the target. Edge vectors and curvature-based features encode the material connectivity of the object, so their errors reflect quantities related to local stretching and bending, whereas the point-coordinate error measures image distances between points regardless of how they are connected through the material. In the <em>Looped rod</em> tab, the rod starts as a hanging ring, and all three representations reach the same unlooped target. With point coordinates, the loop tightens near the grippers, and the largest axial strain reaches about 27%; with curvature-based features, the loop opens first, and the strain never exceeds its initial 2.1%; with edge vectors, it peaks at about 3%. The outcome depends on the initial and target shapes.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>In <em>Invariances</em>, press <em>Translate</em>: only the point coordinates change, and all their <span class="tex">x</span> components (and all <span class="tex">y</span> components) coincide.</li>
+        <li>Press <em>Rotate</em>: point coordinates and edge vectors change, while the curvature does not.</li>
+        <li>Press <em>Bend</em>: all three representations change.</li>
+        <li>In <em>Closed loop</em>, run each representation, or press <em>Compare all three</em>. During the first 20 iterations the disturbance pulls the rod to the right; with point coordinates the loop brings it back to the target pose, with edge vectors the rod reaches the target shape shifted, and with curvature-based features shifted and rotated.</li>
+        <li>Run a <em>Null-space motion</em> for edge vectors or curvature-based features: the robot and the rod move, but the features do not change.</li>
+        <li>In <em>Looped rod</em>, run point coordinates and watch the strain plot while the grippers pull the loop tight; then run curvature-based features, or press <em>Compare all three</em>.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>The feature representation is part of the task definition, not only a measurement choice. Retain position information when the object must reach a shape at a particular pose, and remove rigid motion from the error when only the intrinsic shape matters or when the object should be deformed as little as possible on the way. Both can be combined: Demo 11 regulates curvature-based features and moves the rod to its target pose with a point-coordinate secondary task in the null space.</p>
+</section>

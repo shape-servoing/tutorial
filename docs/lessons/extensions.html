@@ -1,0 +1,32 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>The loop extends without changing its structure. Two additions each add one term to the control law <span class="tex">\vu=\alpha\,\vJh^{+}\ve</span>, and they can be used separately or together.</p>
+    <p><b>Time-varying targets.</b> For a target <span class="tex">\vs^{*}(t)</span>, the shape error changes even when the robot does not move, <span class="tex">\dot{\ve}=\dot{\vs}^{*}-\vJ\vu</span>, so feedback alone lags behind the target; a larger gain <span class="tex">\alpha</span> reduces the lag but does not remove it. A feedforward term compensates for the target motion:</p>
+    <div class="tex-block">\vu_k=\alpha\,\vJh_k^{+}\ve_k+\vJh_k^{+}\dot{\vs}^{*}_k,</div>
+    <p>where <span class="tex">\dot{\vs}^{*}_k</span> is the target velocity at iteration <span class="tex">k</span>.</p>
+    <p><b>Secondary tasks.</b> When the shape-servoing task leaves some robot motion directions unconstrained, that is, when <span class="tex">\Null(\vJh_k)</span> is nontrivial, a secondary task can request a robot velocity <span class="tex">\vu_{2,k}</span>, whose projection onto this null space is added to the command:</p>
+    <div class="tex-block">\vu_k=\alpha\,\vJh_k^{+}\ve_k+\big(\mathbf{I}_m-\vJh_k^{+}\vJh_k\big)\,\vu_{2,k},</div>
+    <p>where <span class="tex">\mathbf{I}_m</span> is the <span class="tex">m\times m</span> identity matrix. According to the estimate, the projected motion leaves the features unchanged to first order. Here, the secondary task drives the left gripper toward a marker <span class="tex">(m_x,m_y)</span> with <span class="tex">\vu_{2,k}=\beta\,[\ve_{\mathrm{m},k}^{\top},0,0,0,0]^{\top}</span>, where <span class="tex">\ve_{\mathrm{m},k}=[m_x-x_{L,k},\,m_y-y_{L,k}]^{\top}</span> is the marker error of the left gripper.</p>
+    <p><b>Two feature representations.</b> The secondary task can itself be a feature task. With curvature-based features as the primary features and <span class="tex">\vu_{2,k}=\beta\,\vJh_{\mathrm{p},k}^{+}\ve_{\mathrm{p},k}</span>, where <span class="tex">\ve_{\mathrm{p},k}</span> and <span class="tex">\vJh_{\mathrm{p},k}</span> are the error and Jacobian estimate of the point coordinates, the curvature-based features unloop a looped rod with little stretching while the projected point-coordinate task moves it to the target pose. Only <span class="tex">\vJh_{\mathrm{p},k}</span> is estimated: the turning angles <span class="tex">\boldsymbol{\kappa}</span> are a known function of the point coordinates <span class="tex">\vs_{\mathrm{p}}</span>, so the chain rule gives <span class="tex">\vJh_k=(\partial\boldsymbol{\kappa}/\partial\vs_{\mathrm{p}})\,\vJh_{\mathrm{p},k}</span>, and robot motions that <span class="tex">\vJh_{\mathrm{p},k}</span> predicts to move the tracked points rigidly lie in <span class="tex">\Null(\vJh_k)</span>.</p>
+    <p>The same loop also applies to three-dimensional objects (Demo 12). Plastic and other history-dependent materials require a different extension, because the relation between <span class="tex">\vq</span> and <span class="tex">\vs</span> then depends on the manipulation history.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li><em>Moving target</em>: run with the feedforward term on, then off. Without it, the rod lags behind the swaying target; with it, the tracking error stays small.</li>
+        <li>Without feedforward, raise <span class="tex">\alpha</span>: the lag shrinks but does not vanish.</li>
+        <li><em>Secondary task</em>: the features are curvature-based (<span class="tex">n=3&lt;m=6</span>), and the shape is held at its current value. Drag the marker: the left gripper follows it while the rod keeps its shape.</li>
+        <li>Switch the projection off: the same secondary command now also deforms the rod, and the shape error rises while the first term of the control law corrects it.</li>
+        <li><em>Shape and transport</em>: run with transport on. The curvature-based features open the loop, and the point-coordinate task carries the rod to the target pose without stretching it. Reset and run with transport off: the rod reaches the target shape but stays where it started.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>The feedforward term compensates for the motion of a time-varying target, and the null space of the estimate allows secondary tasks that, to first order, leave the regulated features unchanged.</p>
+</section>
+
+<details>
+    <summary>What this demo computes</summary>
+    <p>The moving target is the equilibrium of the rod at a grasp that sways and tilts with a period of 120 iterations, and <span class="tex">\dot{\vs}^{*}_k</span> is the target change over the next control period <span class="tex">\Delta t=1</span>. The secondary task of the second tab uses <span class="tex">\beta=0.05</span>; the point-coordinate task of the third tab uses <span class="tex">\beta=0.1</span>, with the damped inverse. There, <span class="tex">\vJh_{\mathrm{p},k}</span> starts from an offline regression around the looped rod and is updated with Broyden's rule at every iteration, with transport on or off.</p>
+</details>

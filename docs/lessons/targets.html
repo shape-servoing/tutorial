@@ -1,0 +1,36 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">Global target properties</p>
+    <p>Not every requested shape can be obtained with a given robot, grasp, and object. Let <span class="tex">\mathcal S\subseteq\R^n</span> contain the feature vectors realizable under all robot, contact, object, and quasistatic constraints.</p>
+    <p>A target is <em>feasible</em> when <span class="tex">\vs^*\in\mathcal S</span>. It is <em>reachable from the current state</em> when an admissible manipulation path connects the current state to a state realizing <span class="tex">\vs^*</span>. Thus, a feasible target need not be reachable from every initial state—for example, it may lie on a disconnected equilibrium branch.</p>
+    <p>The schematic separates three cases: feasible and reachable, feasible but not reachable from the current state, and infeasible because the requested shape lies outside <span class="tex">\mathcal S</span>.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Local information is different</p>
+    <p>The Jacobian describes only the tangent directions currently available:</p>
+    <div class="tex-block">\dot{\vs}\in\Range(\vJ(\vq)).</div>
+    <p>It identifies locally producible feature changes, but cannot by itself prove global feasibility or the existence of an admissible path. With an exact Jacobian, the instantaneous feature error decomposes as</p>
+    <div class="tex-block">\ve=\underbrace{\vJ\vJ^{+}\ve}_{\ve_{\parallel}\in\Range(\vJ)}+\underbrace{(\mathbf I-\vJ\vJ^{+})\ve}_{\ve_{\perp}\in\Null(\vJ^{\top})}.</div>
+    <p>The controller can reduce <span class="tex">\ve_{\parallel}</span> locally. The orthogonal component is the local least-squares residual. With an estimated Jacobian, the displayed aqua/red split uses <span class="tex">\vJh_k</span>; the dashed curve in the component plot reports the exact reducible fraction for comparison.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">The two running-example targets</p>
+    <p>The recorded target comes from another admissible gripper configuration, so it is feasible by construction. Convergence to zero in this trial also demonstrates that it is reachable from the tested initial state.</p>
+    <p>The second target is deliberately synthetic: three feature points are displaced beyond the rod's admissible deformation limits. Following the tutorial (Section IV-B, and Fig. S1 of its supplementary material), it is classified as <em>infeasible</em>, not merely “unreachable.” Its nonzero final error is a least-squares compromise.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>Use the global schematic to compare membership in <span class="tex">\mathcal S</span> with the existence of an admissible path. Notice that the dashed local <span class="tex">\Range(\vJ)</span> line answers neither global question.</li>
+        <li>Run <em>Feasible &amp; reachable (recorded)</em>: the yellow points enter the grey rings and the error converges to zero.</li>
+        <li>Run <em>Infeasible (beyond limits)</em>: the error plateaus. Aqua arrows are the currently reducible component; red arrows are the locally non-reducible component.</li>
+        <li>Switch on <em>exact Jacobian</em>. At the final compromise, the exact reducible fraction tends to zero and the residual lies in <span class="tex">\Null(\vJ^{\top})</span>.</li>
+        <li>Drag a target ring. The edited target has no automatic global classification—the local split only reports what an infinitesimal motion can change now.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>Feasibility and reachability are global properties; <span class="tex">\Range(\vJ)</span> is a local tangent space. A nonzero least-squares residual diagnoses locally non-reducible error, not by itself the global reason that the target was missed.</p>
+</section>

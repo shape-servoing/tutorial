@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to use the demos · Shape Servoing Demos</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzUyNzU2MyIvPjxwYXRoIGQ9Ik01IDE5YzQtOSA3LTkgMTEgMHM3IDkgMTEgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMuMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGNpcmNsZSBjeD0iMTAuNSIgY3k9IjEzLjYiIHI9IjIuMSIgZmlsbD0iI2YyYjUyYSIvPjxjaXJjbGUgY3g9IjIxLjUiIGN5PSIyNC40IiByPSIyLjEiIGZpbGw9IiNmMmI1MmEiLz48L3N2Zz4K" data-inline="img/icon.svg">
+    <script>(function () {
+    // The pages run inside player.html (js/lib/frame.js): move there before the rest of this page loads,
+    // except in a frame, with ?standalone, or on hosts that serve every page in a sandboxed origin.
+    var sandboxed = window.origin === 'null' && location.protocol !== 'file:';
+    if (window.top === window && !sandboxed && !/[?&]standalone\b/.test(location.search)) {
+        var page = location.pathname.split('/').pop() || 'index.html';
+        location.replace('player.html?p=' + encodeURIComponent(page + location.search + location.hash));
+        return;
+    }
+    // Theme and palette before the first paint (js/lib/theme.js; carried in ?st= where storage is unavailable).
+    var get = function (key) { try { return localStorage.getItem(key); } catch (e) { return null; } };
+    var theme = get('shape-servoing-theme'), palette = get('shape-servoing-palette');
+    try {
+        var st = new URLSearchParams(location.search).get('st');
+        if (st) {
+            var carried = JSON.parse(atob(st.replace(/-/g, '+').replace(/_/g, '/')));
+            theme = carried['shape-servoing-theme'] || theme;
+            palette = carried['shape-servoing-palette'] || palette;
+        }
+    } catch (e) { /* malformed */ }
+    document.documentElement.dataset.theme = theme === 'dark' || theme === 'light' ? theme
+        : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    if (palette === 'cvd') document.documentElement.dataset.palette = 'cvd';
+})();</script>
+    <style data-inline="css/app.css">
+/* ==========================================================================
+   Shape servoing tutorial - interactive companion
+   Visual language: entity colours of the paper
+   figures (rod blue, tracked points yellow, target slate, grippers violet and
+   orange, failures red).
+   ========================================================================== */
+
+:root {
+    color-scheme: light;
+    --bg: #f7f8f7;
+    --surface: #ffffff;
+    --surface-soft: #f0f3f1;
+    --ink: #1d2522;
+    --ink-soft: #46504b;
+    --muted: #6d7773;
+    --line: #dce1de;
+    --line-strong: #c2cac6;
+    --accent: #527563;
+    --accent-strong: #3e624f;
+    --accent-soft: #eaf1ed;
+    --canvas: #fbfcfb;
+    --grid: #e8ece9;
+    --grid-strong: #d5dcd8;
+    --robot: #9aa6a1;
+    --robot-deep: #7b8983;
+    --joint: #5d6a64;
+    --shadow: 0 12px 36px rgba(28, 39, 34, 0.07);
+
+    --rod: #2a78d6;
+    --feature: #eda100;
+    --feature-ring: #1d2522;
+    --target: #868aad;
+    --target-point: #727273;
+    --grip-l: #4a3aa7;
+    --grip-r: #eb6834;
+    --red: #e34948;
+    --aqua: #1baf7a;
+    --green: #2e8540;
+    --rep-points: #2a78d6;
+    --rep-edges: #eb6834;
+    --rep-angles: #1baf7a;
+    --div-neg: #e34948;
+    --div-pos: #2a78d6;
+    --div-mid: #f0efec;
+
+    --font: "Aptos", "Segoe UI Variable", "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+    --mono: "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: var(--font);
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #111513;
+    --surface: #171c19;
+    --surface-soft: #202723;
+    --ink: #eef1ef;
+    --ink-soft: #c3cbc7;
+    --muted: #929d97;
+    --line: #303833;
+    --line-strong: #48524c;
+    --accent: #91b19f;
+    --accent-strong: #b2cdbf;
+    --accent-soft: #26372f;
+    --canvas: #1c221f;
+    --grid: #2a322d;
+    --grid-strong: #3a443d;
+    --robot: #6f7d77;
+    --robot-deep: #586661;
+    --joint: #aab6b0;
+    --shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
+
+    --rod: #4b93ea;
+    --feature: #f2b52a;
+    --feature-ring: #111513;
+    --target: #a7abcc;
+    --target-point: #a3a3a6;
+    --grip-l: #8d80ee;
+    --grip-r: #f08a5a;
+    --red: #ec6b6a;
+    --aqua: #2bbd88;
+    --green: #4caf63;
+    --rep-points: #4b93ea;
+    --rep-edges: #f08a5a;
+    --rep-angles: #2bbd88;
+    --div-neg: #ec6b6a;
+    --div-pos: #4b93ea;
+    --div-mid: #2b302d;
+}
+
+/* Level 2 (advanced concepts): a warm sand palette for the page, canvases,
+   robot arms, and interface accents, so that level 2 demos are recognizable at
+   a glance. Entity colours (rod, points, target, grippers) do not change.
+   Applied to <html> on level 2 demo pages and to the level 2 menu section. */
+[data-part="2"] {
+    --bg: #f7f4ee;
+    --surface: #fffdf9;
+    --surface-soft: #f3eee4;
+    --muted: #776f66;
+    --line: #e4ddd0;
+    --line-strong: #cdc3b1;
+    --accent: #8d6b43;
+    --accent-strong: #6f5232;
+    --accent-soft: #f2eadc;
+    --canvas: #fdfbf7;
+    --grid: #efe9de;
+    --grid-strong: #e0d7c7;
+    --robot: #a9a297;
+    --robot-deep: #8a8377;
+    --joint: #6b645a;
+    --div-mid: #f2efe9;
+}
+[data-theme="dark"][data-part="2"], [data-theme="dark"] [data-part="2"] {
+    --bg: #15130f;
+    --surface: #1c1915;
+    --surface-soft: #27221b;
+    --muted: #a09586;
+    --line: #38312a;
+    --line-strong: #51493e;
+    --accent: #c9a97f;
+    --accent-strong: #dcc29e;
+    --accent-soft: #392f23;
+    --canvas: #221e18;
+    --grid: #302a22;
+    --grid-strong: #423a30;
+    --robot: #80786c;
+    --robot-deep: #685f54;
+    --joint: #b8ad9e;
+    --div-mid: #2e2a24;
+}
+
+/* Optional colour-blind palette (⋯ menu), after the Okabe-Ito set: red becomes
+   vermillion, green bluish green, and aqua sky blue, so that pairs such as
+   failure/success, command/response, and edge vectors/turning angles stay
+   distinct under common colour-vision deficiencies. The colour names used in
+   the lessons (blue rod, yellow points, violet and orange grippers, red, green)
+   still apply. The dark rule sets every property of the light one. */
+[data-palette="cvd"] {
+    --rod: #0072b2;
+    --red: #d55e00;
+    --aqua: #56b4e9;
+    --green: #009e73;
+    --rep-points: #0072b2;
+    --rep-angles: #009e73;
+    --div-neg: #d55e00;
+    --div-pos: #0072b2;
+}
+[data-theme="dark"][data-palette="cvd"] {
+    --rod: #4ba3e3;
+    --red: #f07f3c;
+    --aqua: #8ed0f2;
+    --green: #1db38a;
+    --rep-points: #4ba3e3;
+    --rep-angles: #1db38a;
+    --div-neg: #f07f3c;
+    --div-pos: #4ba3e3;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+    min-height: 100vh;
+    color: var(--ink);
+    background: var(--bg);
+    font-size: 15px;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+}
+
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+h1, h2, h3, h4, p { margin-top: 0; }
+a { color: var(--accent-strong); }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+
+/* ---------------------------------------------------------------- topbar */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 22px;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(8px);
+}
+.brand { display: flex; gap: 10px; align-items: center; color: var(--ink); font-weight: 720; text-decoration: none; letter-spacing: -0.01em; }
+.brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; background: var(--accent-soft); }
+.topbar-title { min-width: 0; overflow: hidden; color: var(--muted); font-size: 0.82rem; white-space: nowrap; text-overflow: ellipsis; }
+.topbar-title strong { color: var(--ink); font-weight: 680; }
+.topbar-spacer { flex: 1; }
+.topbar-nav { display: flex; gap: 6px; }
+
+/* ---------------------------------------------------------------- buttons */
+.button {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    min-height: 33px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    color: var(--ink);
+    background: var(--surface);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.button:disabled { color: var(--muted); cursor: not-allowed; opacity: 0.55; }
+.button.primary { color: #ffffff; border-color: var(--accent-strong); background: var(--accent-strong); }
+.button.primary:hover:not(:disabled) { color: #ffffff; background: var(--accent); }
+[data-theme="dark"] .button.primary, [data-theme="dark"] .button.primary:hover:not(:disabled) { color: #152019; }
+.button.ghost { border-color: transparent; background: transparent; }
+.button.small { min-height: 28px; padding: 4px 9px; font-size: 0.7rem; }
+.button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.icon-button { width: 34px; padding: 0; }
+
+/* ---------------------------------------------------------------- menu */
+.menu { width: min(100%, 1180px); margin: 0 auto; padding: 34px 24px 60px; }
+.menu-intro-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; margin-bottom: 34px; }
+.menu-hero { min-width: 0; }
+.kicker { margin: 0 0 6px; color: var(--accent); font-size: 0.72rem; font-weight: 760; letter-spacing: 0.1em; text-transform: uppercase; }
+.menu-hero h1 { margin-bottom: 12px; font-size: clamp(1.9rem, 3.8vw, 2.7rem); font-weight: 680; letter-spacing: -0.045em; line-height: 1.04; }
+.menu-hero p { color: var(--ink-soft); font-size: 0.98rem; }
+/* How to use the demos, glossary, definitions, and citation, under the introduction. */
+.hero-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; }
+.hero-actions .button { min-height: 36px; padding: 7px 14px; font-size: 0.8rem; }
+.hero-action-icon { display: inline-grid; width: 18px; height: 18px; place-items: center; border-radius: 6px; color: var(--accent-strong); background: var(--accent-soft); font-size: 0.78rem; font-weight: 800; }
+.paper-figure { min-width: 0; margin: 0; }
+.paper-figure-panel { padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: #ffffff; box-shadow: var(--shadow); }
+.paper-figure img { display: block; width: 100%; max-width: 900px; height: auto; margin: 0 auto; }
+.paper-figure figcaption { margin: 9px 4px 0; color: var(--ink-soft); font-size: 0.76rem; line-height: 1.45; }
+.paper-figure figcaption b { color: var(--ink); }
+.loop-strip { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+.loop-chip { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-soft); background: var(--surface); font-size: 0.72rem; font-weight: 650; }
+.loop-chip b { color: var(--accent-strong); }
+
+.part { margin-top: 30px; }
+.part[data-part="2"] { margin-top: 40px; padding: 20px 20px 24px; border: 1px solid var(--line); border-radius: 18px; color: var(--ink); background: var(--bg); }
+.part-tag { display: inline-block; margin-right: 8px; padding: 2px 9px; border-radius: 999px; color: var(--accent-strong); background: var(--accent-soft); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: 2px; }
+.topbar .part-tag { margin-right: 6px; }
+.part-heading { display: flex; gap: 14px; align-items: baseline; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.part-heading h2 { margin: 0; font-size: 1.18rem; letter-spacing: -0.02em; }
+.part-heading p { margin: 0; color: var(--muted); font-size: 0.82rem; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+
+.demo-card {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    color: inherit;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.demo-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.demo-card canvas { display: block; width: 100%; aspect-ratio: 2.3 / 1; background: var(--canvas); border-bottom: 1px solid var(--line); }
+.demo-card-body { display: grid; gap: 6px; padding: 14px 16px 16px; }
+.demo-card-top { display: flex; gap: 10px; align-items: baseline; }
+.demo-index { color: var(--accent); font-family: var(--mono); font-size: 0.78rem; font-weight: 700; }
+.demo-card h3 { margin: 0; font-size: 1.0rem; letter-spacing: -0.015em; }
+.demo-card p { margin: 0; color: var(--muted); font-size: 0.8rem; }
+.concepts { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.concept { padding: 2px 8px; border-radius: 999px; color: var(--accent-strong); background: var(--accent-soft); font-size: 0.66rem; font-weight: 700; }
+.visited-badge { position: absolute; top: 10px; right: 10px; padding: 2px 8px; border-radius: 999px; color: var(--accent-strong); background: var(--surface); font-size: 0.64rem; font-weight: 760; box-shadow: inset 0 0 0 1px var(--line); }
+.menu-footer { margin-top: 40px; color: var(--muted); font-size: 0.78rem; }
+
+/* ---------------------------------------------------------------- demo page */
+.demo-layout { display: grid; grid-template-columns: 380px minmax(0, 1fr); min-height: calc(100vh - 55px); }
+.lesson {
+    position: sticky;
+    top: 55px;
+    height: calc(100vh - 55px);
+    overflow-y: auto;
+    padding: 24px 24px 40px;
+    border-right: 1px solid var(--line);
+    background: var(--surface);
+}
+.lesson h1 { margin-bottom: 8px; font-size: 1.55rem; font-weight: 690; letter-spacing: -0.035em; line-height: 1.1; }
+.lesson-intro { color: var(--ink-soft); font-size: 0.9rem; }
+.lesson-block { margin-top: 20px; }
+.lesson-block p, .lesson-block li { color: var(--ink-soft); font-size: 0.86rem; }
+.lesson-kicker { margin-bottom: 8px !important; color: var(--accent-strong) !important; font-size: 0.66rem !important; font-weight: 820; letter-spacing: 0.09em; text-transform: uppercase; }
+.lesson .tex-block { margin: 10px 0 12px; padding: 10px 12px; overflow-x: auto; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; background: var(--surface-soft); }
+.lesson .tex-block .katex-display { margin: 0; }
+.missions { margin: 0; padding-left: 0; list-style: none; counter-reset: mission; }
+.missions li { position: relative; margin-bottom: 9px; padding-left: 30px; }
+.missions li::before {
+    counter-increment: mission;
+    content: counter(mission);
+    position: absolute;
+    top: 1px;
+    left: 0;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+.takeaway { padding: 14px 16px; border-radius: 12px; background: var(--accent-soft); }
+.takeaway p { margin: 0; color: var(--ink) !important; }
+.lesson details { margin-top: 18px; border-top: 1px solid var(--line); }
+.lesson summary { padding: 10px 0; color: var(--ink); font-size: 0.84rem; font-weight: 720; cursor: pointer; }
+.lesson-nav { display: flex; gap: 8px; justify-content: space-between; margin-top: 26px; }
+
+.workspace { min-width: 0; padding: 20px 22px 40px; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.stage.wide-rail { grid-template-columns: minmax(0, 1fr) 360px; }
+.stage.no-rail { grid-template-columns: minmax(0, 1fr); }
+
+.card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
+.card + .card { margin-top: 12px; }
+.card-heading { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.card-heading h3 { margin: 0; font-size: 0.84rem; font-weight: 730; }
+.card-note { color: var(--muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+.rail { display: grid; gap: 12px; }
+.rail .card + .card { margin-top: 0; }
+
+.scene-canvas { display: block; width: 100%; height: clamp(230px, 32vh, 310px); border: 1px solid var(--line); border-radius: 10px; background: var(--canvas); touch-action: none; }
+.scene-canvas.tall { height: clamp(250px, 36vh, 340px); }
+.scene-canvas.compact { height: clamp(210px, 27vh, 255px); }
+.scene-canvas.spatial-canvas { height: clamp(245px, 30vh, 300px); cursor: grab; }
+.spatial-view-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.spatial-mini-view { position: relative; min-width: 0; }
+.spatial-mini-canvas { display: block; width: 100%; height: 82px; border: 1px solid var(--line); border-radius: 8px; background: var(--canvas); }
+.spatial-mini-view > span { position: absolute; right: 7px; bottom: 5px; padding: 1px 4px; border-radius: 4px; color: var(--muted); background: color-mix(in srgb, var(--canvas) 82%, transparent); font-size: 0.61rem; font-weight: 650; letter-spacing: 0.02em; }
+.subspace-canvas { display: block; width: 100%; height: 250px; border: 1px solid var(--line); border-radius: 9px; background: var(--canvas); }
+.interaction-guide { margin: -1px 0 9px; padding: 7px 9px; border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; color: var(--ink-soft); background: var(--accent-soft); font-size: 0.71rem; line-height: 1.4; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; padding: 8px 2px 0; color: var(--muted); font-size: 0.7rem; }
+.legend-item { display: inline-flex; gap: 6px; align-items: center; }
+.swatch { width: 18px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; }
+.swatch.dashed { border-top-style: dashed; }
+.swatch.dot { width: 9px; height: 9px; border: 0; border-radius: 50%; background: currentColor; }
+.swatch.ring { width: 10px; height: 10px; border: 1.6px solid currentColor; border-radius: 50%; }
+.toolbar { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; padding-top: 10px; }
+.toolbar-divider { width: 1px; height: 22px; margin: 0 3px; background: var(--line); }
+.hint { color: var(--muted); font-size: 0.72rem; }
+
+.plots { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 16px; }
+.plot-canvas { display: block; width: 100%; height: 190px; }
+.plot-canvas.short { height: 150px; }
+.plot-canvas.tall { height: 240px; }
+.series-legend { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 6px; color: var(--muted); font-size: 0.68rem; }
+.series-legend > span { display: inline-flex; gap: 5px; align-items: center; }
+.series-legend > span > i { width: 14px; height: 0; border-top: 2.5px solid currentColor; }
+.series-legend > span > i.dotted { border-top-style: dotted; }
+.series-legend > span > i.dashed { border-top-style: dashed; }
+
+/* ---------------------------------------------------------------- controls */
+.control { display: grid; gap: 4px; margin-bottom: 10px; }
+.control-head { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; font-size: 0.76rem; }
+.control-head label { color: var(--ink-soft); font-weight: 650; }
+.control-head output { color: var(--ink); font-family: var(--mono); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.control-help { margin: -1px 0 2px; color: var(--muted); font-size: 0.67rem; font-weight: 450; line-height: 1.35; }
+input[type="range"] { width: 100%; accent-color: var(--accent-strong); }
+.segmented { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
+.segmented button { min-height: 28px; padding: 3px 10px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 0.72rem; font-weight: 720; cursor: pointer; }
+.segmented button[aria-pressed="true"] { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.switch { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; color: var(--ink-soft); font-size: 0.76rem; font-weight: 650; cursor: pointer; }
+.switch input { width: 30px; height: 17px; accent-color: var(--accent-strong); }
+
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 10px 14px; }
+.readout > span { display: block; color: var(--muted); font-size: 0.66rem; }
+.readout > strong { display: block; margin-top: 2px; color: var(--ink); font-size: 1.02rem; font-weight: 760; font-variant-numeric: tabular-nums; }
+.readout > strong.good { color: var(--green); }
+.readout > strong.bad { color: var(--red); }
+
+.status { display: flex; gap: 8px; align-items: center; margin-top: 10px; color: var(--muted); font-size: 0.74rem; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+.status-dot.live { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.status-dot.warn { background: var(--red); }
+
+.matrix-canvas { display: block; width: 100%; height: 220px; }
+.bars-canvas { display: block; width: 100%; height: 120px; }
+
+/* algorithm box (Algorithm 1) */
+.algorithm { margin: 0; padding: 10px 0; border-top: 2px solid var(--ink-soft); border-bottom: 2px solid var(--ink-soft); font-size: 0.84rem; }
+.algorithm-caption { padding: 0 8px 6px; border-bottom: 1px solid var(--line); font-size: 0.8rem; }
+.algorithm-line { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 4px; padding: 3px 8px; border-radius: 6px; transition: background 180ms ease; }
+.algorithm-line .num { color: var(--muted); font-family: var(--mono); font-size: 0.7rem; padding-top: 2px; }
+.algorithm-line .comment { color: var(--muted); font-size: 0.74rem; }
+.algorithm-line.active { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent-strong); }
+.algorithm .indent-1 { padding-left: 16px; }
+
+table.lesson-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
+table.lesson-table th, table.lesson-table td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; color: var(--ink-soft); }
+table.lesson-table th { color: var(--ink); font-weight: 720; }
+table.lesson-table tr.active td { background: var(--accent-soft); color: var(--ink); }
+
+.toast { position: fixed; right: 18px; bottom: 18px; z-index: 50; max-width: 420px; padding: 10px 14px; border-radius: 10px; color: #fff; background: #8b2b2b; font-size: 0.8rem; box-shadow: var(--shadow); }
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.tabs button { padding: 8px 14px; border: 0; border-bottom: 2px solid transparent; color: var(--muted); background: transparent; font-size: 0.8rem; font-weight: 720; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent-strong); }
+
+.mini-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mini-grid canvas { display: block; width: 100%; aspect-ratio: 1.9 / 1; border: 1px solid var(--line); border-radius: 10px; background: var(--canvas); }
+.mini-caption { margin-top: 4px; color: var(--muted); font-size: 0.7rem; text-align: center; }
+
+@media (max-width: 1180px) {
+    .demo-layout { grid-template-columns: minmax(0, 1fr); }
+    .lesson { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 860px) {
+    .menu-intro-grid { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+    .stage, .stage.wide-rail { grid-template-columns: minmax(0, 1fr); }
+    .topbar-title { display: none; }
+    .scene-canvas, .scene-canvas.tall { height: clamp(220px, 48vw, 300px); }
+    .scene-canvas.compact { height: clamp(200px, 42vw, 260px); }
+    .scene-canvas.spatial-canvas { height: clamp(230px, 52vw, 300px); }
+    .spatial-mini-canvas { height: 68px; }
+    .subspace-canvas { height: 220px; }
+}
+.schematic-note { margin: 8px 2px 0; color: var(--ink-soft); font-size: 0.76rem; line-height: 1.45; }
+.schematic-note b { color: var(--ink); }
+
+/* ---------------------------------------------------------------- music, progress, medals */
+.music-button { font-size: 1.05rem; }
+.music-button.music-on { color: var(--accent-strong); border-color: var(--accent); background: var(--accent-soft); }
+.music-button.music-on::after { content: ""; width: 6px; height: 6px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+.music-next { min-width: 0; width: 18px; min-height: 28px; margin-left: -11px; padding: 0 0 4px; border-color: transparent; color: var(--muted); background: transparent; font-size: 1.25rem; font-weight: 600; line-height: 1; }
+.music-next:hover:not(:disabled) { color: var(--accent-strong); border-color: transparent; background: transparent; }
+.music-next[hidden] { display: none; }
+.link-button { padding: 0; border: 0; color: var(--accent-strong); background: none; font: inherit; text-decoration: underline; cursor: pointer; }
+
+.part-heading { flex-wrap: wrap; }
+.part-heading-spacer { flex: 1; }
+.part-progress { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); font-size: 0.74rem; font-weight: 650; }
+.part-progress.earned { color: var(--accent-strong); font-weight: 760; }
+.progress-track { position: relative; width: 84px; height: 6px; overflow: hidden; border-radius: 999px; background: var(--surface-soft); box-shadow: inset 0 0 0 1px var(--line); }
+.progress-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--accent); }
+.medal-mini { display: inline-flex; margin: -12px 0 -8px; }
+.medal-mini svg { width: auto; height: 44px; }
+
+.confetti-canvas { position: fixed; inset: 0; z-index: 70; width: 100%; height: 100%; pointer-events: none; }
+.medal-overlay {
+    position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px;
+    background: color-mix(in srgb, #0d1210 46%, transparent); backdrop-filter: blur(3px);
+    animation: overlay-in 260ms ease both;
+}
+.medal-overlay.closing { animation: overlay-out 220ms ease both; }
+.medal-card {
+    width: min(100%, 420px); padding: 18px 26px 22px; border: 1px solid var(--line); border-radius: 20px;
+    color: var(--ink); background: var(--surface); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); text-align: center;
+}
+.medal-card h2 { margin: 2px 0 8px; font-size: 1.55rem; letter-spacing: -0.03em; }
+.medal-card .kicker { margin-top: 4px; }
+.medal-text { margin: 0 0 8px; color: var(--ink-soft); font-size: 0.86rem; line-height: 1.5; }
+.medal-final { color: var(--accent-strong); font-weight: 700; }
+.medal-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.medal-stage { display: grid; place-items: center; height: 240px; }
+.medal-stage svg { height: 230px; width: auto; transform-origin: 50% 0%; animation: medal-pop 900ms cubic-bezier(0.2, 1.4, 0.35, 1) 120ms both, medal-swing 2.6s ease-in-out 1.05s 2; }
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlay-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes medal-pop { 0% { opacity: 0; transform: translateY(-40px) scale(0.3) rotate(-14deg); } 100% { opacity: 1; transform: none; } }
+@keyframes medal-swing { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(5deg); } 70% { transform: rotate(-4deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .medal-overlay, .medal-overlay.closing, .medal-stage svg { animation: none; }
+}
+
+/* ---------------------------------------------------------------- user guide */
+.guide { width: min(100%, 1120px); margin: 0 auto; padding: 30px 24px 60px; }
+.guide-hero { max-width: 760px; margin-bottom: 26px; }
+.guide-hero h1 { margin-bottom: 10px; font-size: clamp(1.8rem, 3.4vw, 2.4rem); font-weight: 680; letter-spacing: -0.04em; line-height: 1.05; }
+.guide-hero p { color: var(--ink-soft); font-size: 0.96rem; }
+.guide-section { margin-top: 30px; }
+.guide-section h2 { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 1.15rem; letter-spacing: -0.02em; }
+.guide-list { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 0.88rem; }
+.guide-list li { margin-bottom: 6px; }
+.guide-list b, .guide-legend b, .guide-card b { color: var(--ink); }
+.key { display: inline-grid; min-width: 22px; height: 20px; padding: 0 5px; place-items: center; border: 1px solid var(--line-strong); border-radius: 6px; color: var(--ink); background: var(--surface); font-size: 0.78rem; font-weight: 700; }
+.guide-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr); gap: 22px; align-items: start; }
+.guide-legend { margin: 0; padding-left: 0; list-style: none; counter-reset: legend; color: var(--ink-soft); font-size: 0.84rem; }
+.guide-legend li { position: relative; margin-bottom: 9px; padding-left: 30px; }
+.guide-legend li::before { counter-increment: legend; content: counter(legend); position: absolute; top: 1px; left: 0; display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; color: #fff; background: var(--accent-strong); font-size: 0.68rem; font-weight: 800; }
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.guide-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.guide-card p { margin: 3px 0 0; color: var(--ink-soft); font-size: 0.8rem; line-height: 1.4; }
+.guide-icon { display: grid; flex: none; width: 32px; height: 32px; place-items: center; border-radius: 9px; color: var(--accent-strong); background: var(--accent-soft); font-size: 1.05rem; }
+.guide-note { margin-top: 12px; color: var(--muted); font-size: 0.8rem; }
+
+/* the frozen demo-page sketch */
+.mock { position: relative; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--bg); box-shadow: var(--shadow); font-size: 9px; line-height: 1.3; pointer-events: none; user-select: none; }
+.mock-top { position: relative; display: flex; gap: 5px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.mock-spacer { flex: 1; }
+.mock-crumb { color: var(--muted); white-space: nowrap; }
+.mock-crumb b { color: var(--ink); }
+.mock-tag { padding: 1px 6px; border-radius: 999px; color: var(--accent-strong); background: var(--accent-soft); font-size: 7.5px; font-weight: 800; letter-spacing: 0.06em; }
+.mock-pill { padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--ink); background: var(--surface); font-weight: 700; white-space: nowrap; }
+.mock-pill.sq { width: 18px; padding: 2px 0; text-align: center; }
+.mock-pill.ghost { border-color: transparent; background: transparent; }
+.mock-pill.primary { color: #fff; border-color: var(--accent-strong); background: var(--accent-strong); }
+.mock-body { display: grid; grid-template-columns: 30% minmax(0, 1fr); min-height: 330px; }
+.mock-lesson { position: relative; display: flex; flex-direction: column; gap: 5px; padding: 10px; border-right: 1px solid var(--line); background: var(--surface); }
+.mock-kicker { margin-top: 3px; color: var(--accent); font-size: 7px; font-weight: 800; letter-spacing: 0.08em; }
+.mock-title { color: var(--ink); font-size: 13px; font-weight: 700; letter-spacing: -0.02em; }
+.mock-line { display: block; height: 5px; border-radius: 3px; background: var(--line); }
+.w60 { width: 60%; }
+.w70 { width: 70%; }
+.w75 { width: 75%; }
+.w80 { width: 80%; }
+.w85 { width: 85%; }
+.w90 { width: 90%; }
+.mock-eq { padding: 5px 7px; border-left: 2px solid var(--accent); border-radius: 0 5px 5px 0; color: var(--ink); background: var(--surface-soft); font-family: Georgia, serif; font-size: 10px; text-align: center; }
+.mock-step { display: flex; gap: 5px; align-items: center; }
+.mock-step i { display: grid; flex: none; width: 11px; height: 11px; place-items: center; border-radius: 50%; color: var(--accent-strong); background: var(--accent-soft); font-size: 6.5px; font-style: normal; font-weight: 800; }
+.mock-step .mock-line { flex: 1; }
+.mock-takeaway { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding: 7px; border-radius: 7px; background: var(--accent-soft); }
+.mock-work { display: flex; flex-direction: column; gap: 8px; padding: 9px; }
+.mock-stage { display: grid; grid-template-columns: minmax(0, 1fr) 34%; gap: 8px; }
+.mock-card { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 7px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.mock-card-title { color: var(--ink); font-size: 8.5px; font-weight: 750; }
+.mock-hint { padding: 3px 5px; border-left: 2px solid var(--accent); color: var(--ink-soft); background: var(--accent-soft); font-size: 7px; }
+.mock-canvas { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--canvas); }
+.mock-grid path { fill: none; stroke: var(--grid); stroke-width: 1; }
+.mock-target { fill: none; stroke: var(--target); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.mock-rings circle { fill: none; stroke: var(--target-point); stroke-width: 1.2; }
+.mock-arm { fill: none; stroke: var(--robot); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.mock-rod { fill: none; stroke: var(--rod); stroke-width: 3; stroke-linecap: round; }
+.mock-points circle { fill: var(--feature); stroke: var(--feature-ring); stroke-width: 0.8; }
+.mock-grip-l { fill: var(--grip-l); }
+.mock-grip-r { fill: var(--grip-r); }
+.mock-handle { fill: none; stroke: var(--accent); stroke-width: 1.4; }
+.mock-legend { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 7px; }
+.mock-legend i { display: inline-block; width: 10px; height: 2px; margin-right: -4px; }
+.mock-legend .c-rod { background: var(--rod); }
+.mock-legend .c-pt { width: 6px; height: 6px; border-radius: 50%; background: var(--feature); }
+.mock-legend .c-tg { height: 0; border-top: 2px dashed var(--target); }
+.mock-toolbar { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.mock-seg { display: inline-flex; gap: 1px; padding: 1px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface-soft); }
+.mock-seg b, .mock-seg span { padding: 1px 5px; border-radius: 4px; color: var(--muted); }
+.mock-seg b { color: var(--ink); background: var(--surface); }
+.mock-rail { gap: 7px; }
+.mock-slider { display: grid; grid-template-columns: 1fr auto; gap: 2px 4px; color: var(--ink-soft); font-size: 7.5px; }
+.mock-slider b { color: var(--ink); font-family: var(--mono); font-weight: 600; }
+.mock-slider i { position: relative; grid-column: 1 / -1; height: 4px; border-radius: 999px; background: var(--line); }
+.mock-slider em { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--accent-strong); }
+.mock-slider em::after { content: ""; position: absolute; top: -3px; right: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-strong); }
+.mock-switch { display: flex; gap: 5px; align-items: center; color: var(--ink-soft); font-size: 7.5px; font-weight: 650; }
+.mock-switch i { width: 10px; height: 10px; border-radius: 3px; background: var(--accent-strong); }
+.mock-readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; color: var(--muted); font-size: 7px; }
+.mock-readouts b { display: block; color: var(--ink); font-size: 11px; }
+.mock-plots { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mock-plots svg { width: 100%; height: auto; }
+.mock-axis { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+.mock-curve { fill: none; stroke: var(--rod); stroke-width: 1.8; }
+.mock-curve.faded { stroke: color-mix(in srgb, var(--rod) 40%, var(--canvas)); }
+.mock-curve.alt { stroke: var(--accent-strong); }
+.mock-badge { position: absolute; z-index: 2; display: grid; width: 18px; height: 18px; place-items: center; border-radius: 50%; color: #fff; background: var(--accent-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-strong) 25%, transparent); font-size: 9.5px; font-weight: 800; }
+@media (max-width: 900px) {
+    .guide-layout { grid-template-columns: minmax(0, 1fr); }
+}
+.mock-badge.inline { position: static; margin-left: 2px; }
+[data-theme="dark"] .mock-badge, [data-theme="dark"] .guide-legend li::before, [data-theme="dark"] .mock-pill.primary { color: #152019; }
+
+/* ---------------------------------------------------------------- ⋯ menu, citation, recording */
+.tools { position: relative; display: inline-flex; }
+.tools-menu {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; display: grid; min-width: 232px; padding: 6px;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow);
+}
+.tools-menu[hidden] { display: none; }
+.tools-menu button {
+    display: flex; gap: 10px; align-items: center; width: 100%; padding: 7px 10px; border: 0; border-radius: 8px;
+    color: var(--ink); background: none; font-size: 0.8rem; font-weight: 600; text-align: left; cursor: pointer;
+}
+.tools-menu button:hover:not(:disabled), .tools-menu button:focus-visible { outline: none; background: var(--accent-soft); }
+.tools-menu button:disabled { color: var(--muted); cursor: not-allowed; opacity: 0.6; }
+.tools-icon { width: 18px; color: var(--muted); text-align: center; }
+.tools-menu [aria-checked]::after { content: ""; width: 14px; margin-left: auto; color: var(--accent-strong); font-weight: 800; }
+.tools-menu [aria-checked="true"]::after { content: "✓"; }
+.tools-menu hr { width: 100%; margin: 5px 0; border: 0; border-top: 1px solid var(--line); }
+
+.cite-dialog {
+    width: min(100% - 32px, 640px); max-height: calc(100vh - 40px); padding: 18px 22px 20px; overflow-y: auto;
+    border: 1px solid var(--line); border-radius: 18px; color: var(--ink); background: var(--surface); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+}
+.cite-dialog::backdrop { background: color-mix(in srgb, #0d1210 46%, transparent); backdrop-filter: blur(3px); }
+.cite-dialog h2 { margin: 0 0 4px; font-size: 1.2rem; letter-spacing: -0.02em; }
+.cite-note { margin-bottom: 4px; color: var(--muted); font-size: 0.76rem; }
+.cite-block { margin-top: 12px; }
+.cite-block-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; color: var(--ink-soft); font-size: 0.74rem; font-weight: 720; }
+.cite-block pre {
+    margin: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-soft);
+    font-family: var(--mono); font-size: 0.72rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.cite-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+.rec-pill {
+    position: fixed; right: 18px; bottom: 18px; z-index: 50; display: inline-flex; gap: 8px; align-items: center; padding: 7px 12px;
+    border: 1px solid var(--line-strong); border-radius: 999px; color: var(--ink); background: var(--surface); box-shadow: var(--shadow);
+    font-size: 0.76rem; font-weight: 720; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); animation: rec-blink 1.2s ease-in-out infinite; }
+.rec-stop { padding-left: 8px; border-left: 1px solid var(--line); color: var(--accent-strong); }
+@keyframes rec-blink { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }
+
+/* ---------------------------------------------------------------- teaching mode */
+/* ⋯ > Teaching mode, or ?present in a demo address: the demo without its lesson
+   column and page extras, with larger text and canvases, for lectures and
+   screen sharing. The previous / next links keep the mode. */
+html.teaching { font-size: 18px; }
+.teaching .demo-layout { grid-template-columns: minmax(0, 1fr); }
+.teaching .lesson, .teaching .topbar > a.ghost, .teaching .topbar > a[href="guide.html"],
+.teaching #musicButton, .teaching .music-next { display: none; }
+.teaching .workspace { width: min(100%, 1560px); margin: 0 auto; padding: 18px 28px 32px; }
+.teaching .scene-canvas { height: clamp(300px, 50vh, 600px); }
+.teaching .scene-canvas.tall { height: clamp(320px, 56vh, 660px); }
+.teaching .scene-canvas.compact { height: clamp(260px, 40vh, 480px); }
+.teaching .scene-canvas.spatial-canvas { height: clamp(300px, 48vh, 560px); }
+.teaching .plot-canvas { height: 230px; }
+.teaching .plot-canvas.short { height: 180px; }
+.teaching .plot-canvas.tall { height: 290px; }
+.teaching-exit { display: none; }
+.teaching .teaching-exit { display: inline-flex; }
+
+/* ---------------------------------------------------------------- glossary */
+.glossary-jump { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.glossary { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 0 24px; margin: 0; }
+.glossary dt, .glossary dd { padding: 10px 0; border-top: 1px solid var(--line); }
+.glossary dt { color: var(--ink); font-size: 0.88rem; font-weight: 720; scroll-margin-top: 70px; }
+.glossary dd { margin: 0; color: var(--ink-soft); font-size: 0.86rem; }
+.glossary .see { display: block; margin-top: 3px; color: var(--muted); font-size: 0.76rem; }
+.glossary .katex { font-size: 1.02em; }
+@media (max-width: 700px) {
+    .glossary { grid-template-columns: minmax(0, 1fr); }
+    .glossary dd { padding-top: 0; border-top: 0; }
+}
+
+/* ---------------------------------------------------------------- useful definitions */
+/* definitions.html: an index table, two figures, and the entries in the
+   glossary's two-column layout. The inline SVG figures use the colour
+   variables, so they follow the theme and the colour-blind palette. */
+.def-index-wrap { overflow-x: auto; }
+.def-index { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.def-index th, .def-index td { padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.def-index th { color: var(--muted); font-size: 0.74rem; font-weight: 720; letter-spacing: 0.04em; text-transform: uppercase; }
+.def-index td { color: var(--ink-soft); white-space: nowrap; }
+.def-index td:first-child { white-space: normal; }
+.def-note { margin-top: 8px; color: var(--muted); font-size: 0.78rem; }
+.def-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; align-items: start; }
+.def-figure { margin: 0; scroll-margin-top: 70px; }
+.def-figure svg { display: block; width: 100%; height: auto; margin: 0 auto; color: var(--ink); fill: currentColor; }
+.def-figure figcaption { margin-top: 8px; color: var(--ink-soft); font-size: 0.8rem; line-height: 1.45; }
+.def-figure figcaption b { color: var(--ink); }
+
+/* The TeX source stays hidden until KaTeX (at the end of the page) has typeset it. */
+.tex:not([data-rendered]), .tex-block:not([data-rendered]) { visibility: hidden; }
+
+/* Figure or video export on hosts that block downloads (js/lib/tools.js). */
+.export-dialog { width: min(920px, calc(100vw - 32px)); }
+.export-media { display: block; max-width: 100%; max-height: 64vh; margin: 8px auto 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+</style>
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">〰</span>Shape servoing · interactive tutorial</a>
+        <span class="topbar-spacer"></span>
+        <a class="button small" href="index.html">All demos</a>
+        <button id="musicButton" class="button icon-button music-button" type="button" aria-pressed="false" aria-label="Background music" title="Background music">♪</button>
+        <button id="themeButton" class="button icon-button" type="button" title="Switch light / dark theme" aria-label="Switch theme">◐</button>
+        <button id="paletteButton" class="button icon-button" type="button" aria-pressed="false" title="Color-blind palette (on / off)" aria-label="Color-blind palette"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button id="toolsButton" class="button icon-button" type="button" title="More: cite, glossary, definitions" aria-label="More options">⋯</button>
+    </header>
+
+    <main class="guide">
+        <section class="guide-hero">
+            <p class="kicker">User guide</p>
+            <h1>How to use the demos</h1>
+            <p>Each demo pairs a short lesson from the tutorial with an interactive simulation of its running example: two robot arms deform an elastic rod observed by a camera. The simulation runs in your browser, in a JavaScript port of the <code>shape_servoing</code> Python package, so every change you make is computed live.</p>
+            <a class="button primary" href="index.html">Go to the demos ▶</a>
+        </section>
+
+        <section class="guide-section" aria-labelledby="guideMenu">
+            <h2 id="guideMenu">The landing page</h2>
+            <ul class="guide-list">
+                <li><b>Demos in tutorial order, in two levels.</b> Level 1, <i>Fundamentals</i> (Sections II–IV of the tutorial), builds the shape-servoing loop; level 2, <i>Advanced concepts</i> (Sections V–VII and Appendix E), analyzes and extends it. Level 2 demos use a warmer page color. Each card shows a preview, the key concepts, and a ✓ once visited.</li>
+                <li><b>Progress and medals.</b> The bar beside each level counts the demos you have visited; visiting all of them earns the level 1 or level 2 medal, awarded when you leave the last one (to the next demo or back to this page). <i>Reset progress</i>, at the bottom of the page, starts over.</li>
+                <li><b>Top bar.</b> <span class="key">?</span> opens this guide, <span class="key">♪</span> plays optional background music (silent until you click it; <span class="key">›</span> skips to the next piece), <span class="key">◐</span> switches between light and dark themes, <span class="key"><svg viewBox="0 0 24 24" width="13" height="13" role="img" aria-label="eye" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span> switches to a color-blind palette, and <span class="key">⋯</span> opens a menu to cite the tutorial or open the <a href="glossary.html">glossary</a> and the <a href="definitions.html">useful definitions</a> (standard concepts such as range, null space, and pseudoinverse). The buttons under the introduction open this guide, the glossary, the definitions, and the citation.</li>
+            </ul>
+        </section>
+
+        <section class="guide-section" aria-labelledby="guideDemo">
+            <h2 id="guideDemo">A demo page</h2>
+            <div class="guide-layout">
+                <!-- A frozen, non-interactive sketch of a demo page. -->
+                <div class="mock" aria-hidden="true">
+                    <div class="mock-top">
+                        <span class="mock-pill ghost">← All demos</span>
+                        <span class="mock-tag">PART I</span>
+                        <span class="mock-crumb">Fundamentals · <b>04 Closing the loop</b></span>
+                        <span class="mock-badge inline">1</span>
+                        <span class="mock-spacer"></span>
+                        <span class="mock-pill">◀ Previous</span><span class="mock-pill">Next ▶</span>
+                        <span class="mock-pill sq">?</span><span class="mock-pill sq">♪</span><span class="mock-pill sq">◐</span><span class="mock-pill sq">◉</span><span class="mock-pill sq">⋯</span>
+                    </div>
+                    <div class="mock-body">
+                        <div class="mock-lesson">
+                            <span class="mock-kicker">PART I · DEMO 04</span>
+                            <span class="mock-title">Closing the loop</span>
+                            <span class="mock-line w90"></span><span class="mock-line w75"></span>
+                            <span class="mock-eq">u = α Ĵ⁺ e</span>
+                            <span class="mock-line w85"></span><span class="mock-line w60"></span>
+                            <span class="mock-kicker">TRY THIS</span>
+                            <span class="mock-step"><i>1</i><span class="mock-line w80"></span></span>
+                            <span class="mock-step"><i>2</i><span class="mock-line w70"></span></span>
+                            <span class="mock-step"><i>3</i><span class="mock-line w75"></span></span>
+                            <span class="mock-takeaway"><span class="mock-line w90"></span><span class="mock-line w60"></span></span>
+                            <span class="mock-badge" style="top: 26px; right: 8px;">2</span>
+                        </div>
+                        <div class="mock-work">
+                            <div class="mock-stage">
+                                <div class="mock-card mock-scene">
+                                    <span class="mock-card-title">Run Algorithm 1</span>
+                                    <span class="mock-hint">Press Run, then switch the online update off and compare…</span>
+                                    <svg class="mock-canvas" viewBox="0 0 300 120" role="presentation">
+                                        <g class="mock-grid">
+                                            <path d="M0 30H300M0 60H300M0 90H300M50 0V120M100 0V120M150 0V120M200 0V120M250 0V120"/>
+                                        </g>
+                                        <path class="mock-target" d="M96 74 C 110 30, 190 30, 204 74"/>
+                                        <g class="mock-rings"><circle cx="104" cy="52" r="3.4"/><circle cx="127" cy="36" r="3.4"/><circle cx="150" cy="32" r="3.4"/><circle cx="173" cy="36" r="3.4"/><circle cx="196" cy="52" r="3.4"/></g>
+                                        <path class="mock-arm" d="M30 116 L 46 66 L 92 76"/><path class="mock-arm" d="M270 116 L 254 66 L 208 76"/>
+                                        <path class="mock-rod" d="M92 76 C 120 92, 180 92, 208 76"/>
+                                        <g class="mock-points"><circle cx="104" cy="82" r="3"/><circle cx="127" cy="87" r="3"/><circle cx="150" cy="88" r="3"/><circle cx="173" cy="87" r="3"/><circle cx="196" cy="82" r="3"/></g>
+                                        <rect class="mock-grip-l" x="86" y="70" width="12" height="12" rx="2"/><rect class="mock-grip-r" x="202" y="70" width="12" height="12" rx="2"/>
+                                        <circle class="mock-handle" cx="92" cy="56" r="5"/><circle class="mock-handle" cx="208" cy="56" r="5"/>
+                                    </svg>
+                                    <span class="mock-legend"><i class="c-rod"></i>rod <i class="c-pt"></i>tracked points <i class="c-tg"></i>target</span>
+                                    <span class="mock-toolbar"><span class="mock-pill primary">▶ Run</span><span class="mock-pill">Step</span><span class="mock-pill">Reset</span><span class="mock-seg"><b>update on</b><span>off</span></span></span>
+                                    <span class="mock-badge" style="top: 40%; left: 10px;">3</span>
+                                    <span class="mock-badge" style="bottom: 6px; right: 8px;">4</span>
+                                </div>
+                                <div class="mock-card mock-rail">
+                                    <span class="mock-card-title">Controller</span>
+                                    <span class="mock-slider"><span>gain α</span><b>0.05</b><i><em style="width: 22%"></em></i></span>
+                                    <span class="mock-slider"><span>damping μ</span><b>0.00</b><i><em style="width: 4%"></em></i></span>
+                                    <span class="mock-switch"><i></i>online update</span>
+                                    <span class="mock-readouts"><span>iteration k<b>37</b></span><span>‖e‖/‖e₀‖<b>12%</b></span></span>
+                                    <span class="mock-badge" style="top: 6px; right: 8px;">5</span>
+                                </div>
+                            </div>
+                            <div class="mock-plots">
+                                <div class="mock-card"><span class="mock-card-title">Normalized error</span><svg viewBox="0 0 120 40" role="presentation"><path class="mock-axis" d="M6 4V36H118"/><path class="mock-curve faded" d="M6 6 C 30 10, 50 24, 118 30"/><path class="mock-curve" d="M6 6 C 20 26, 50 34, 118 35"/></svg></div>
+                                <div class="mock-card"><span class="mock-card-title">Command norm ‖u‖</span><svg viewBox="0 0 120 40" role="presentation"><path class="mock-axis" d="M6 4V36H118"/><path class="mock-curve alt" d="M6 10 C 22 30, 46 33, 118 34"/></svg></div>
+                                <span class="mock-badge" style="top: 6px; right: 8px;">6</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <ol class="guide-legend">
+                    <li><b>Top bar.</b> Back to all demos, the current part and demo, <i>Previous</i> and <i>Next</i>, and the guide, music, and theme buttons. The <span class="key"><svg viewBox="0 0 24 24" width="13" height="13" role="img" aria-label="eye" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span> button switches to a color-blind palette, and the <span class="key">⋯</span> menu cites the demo, saves its canvases as a PNG figure or a short video, switches to <i>teaching mode</i> (a larger view without the lesson, for lectures; or add <code>&amp;present</code> to a demo's address, e.g. <code>demo.html?id=loop&amp;present</code>; Esc leaves), and opens the glossary and the useful definitions.</li>
+                    <li><b>Lesson.</b> The tutorial content with its equations, a <i>Try this</i> list of experiments to do in order, and the takeaway. Some lessons end with collapsible notes.</li>
+                    <li><b>Scene.</b> The running example, computed live. The shaded hint above it says what to try; the legend below names the colors: rod blue, tracked points yellow, target dashed with grey rings, left gripper violet, right gripper orange.</li>
+                    <li><b>Toolbar.</b> <i>Run</i>/<i>Pause</i>, <i>Step</i> (one iteration), <i>Reset</i>, and buttons that choose a case or a feature representation.</li>
+                    <li><b>Controls.</b> Sliders and switches, each with a one-line description of what it changes, and readouts of the current values.</li>
+                    <li><b>Plots.</b> Histories of errors and other signals. Earlier runs stay faded for comparison. Some demos have tabs above the workspace for further experiments.</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="guide-section" aria-labelledby="guideInteract">
+            <h2 id="guideInteract">Ways to interact</h2>
+            <div class="guide-grid">
+                <div class="guide-card"><span class="guide-icon">✥</span><div><b>Drag a gripper</b><p>Drag the violet (left) or orange (right) gripper; the rod settles to its new equilibrium. Demos 01–04 and 08.</p></div></div>
+                <div class="guide-card"><span class="guide-icon">⟳</span><div><b>Rotate a wrist</b><p>Drag the small ring above a gripper to turn its wrist. Demos 01–04 and 08.</p></div></div>
+                <div class="guide-card"><span class="guide-icon">⇔</span><div><b>Move both grippers</b><p>Drag the rod itself to translate both grippers together. Demo 01.</p></div></div>
+                <div class="guide-card"><span class="guide-icon">◎</span><div><b>Drag a target</b><p>Drag a grey target ring to edit the target shape (Demo 05) or the green marker to set a gripper goal (Demo 11).</p></div></div>
+                <div class="guide-card"><span class="guide-icon">▦</span><div><b>Click a matrix or table</b><p>Click a column of the Jacobian heat map (Demo 02) or a singular-triplet row (Demo 08) to select and animate it.</p></div></div>
+                <div class="guide-card"><span class="guide-icon">⊷</span><div><b>Move sliders, flip switches</b><p>Gains, step sizes, damping, perturbations, and options; the scene and readouts update at once.</p></div></div>
+                <div class="guide-card"><span class="guide-icon">▶</span><div><b>Run, step, reset</b><p>Run the loop continuously, one iteration at a time, or start again from the initial configuration.</p></div></div>
+                <div class="guide-card"><span class="guide-icon">☰</span><div><b>Choose and compare</b><p>Segmented buttons and tabs choose a case, a representation, or an experiment; <i>Compare</i> buttons run several at once.</p></div></div>
+                <div class="guide-card"><span class="guide-icon">⤾</span><div><b>Orbit and zoom</b><p>In the 3-D view, drag to orbit and use the mouse wheel to zoom. Demo 12.</p></div></div>
+            </div>
+            <p class="guide-note">Hover over a button or control for a short tooltip. The pointer changes over anything you can drag.</p>
+        </section>
+    </main>
+    <script data-inline="js/guide.js">
+/* docs/js/guide.js and the modules it imports, bundled by tools/build_web.py (sources 9620e08dbb310c2f) */
+(async () => {
+var K="shape-servoing",x=()=>window.parent!==window,P=()=>window.origin==="null"&&location.protocol!=="file:";function b(e,t={}){x()&&window.parent.postMessage({[K]:e,...t},"*")}function C(e,t){window.addEventListener("message",n=>{n.source===window.parent&&n.data&&n.data[K]===e&&t(n.data)})}var ge="player.html";function J(){let e=location.pathname.split("/").pop()||"index.html",t=new URLSearchParams(location.search);t.delete("standalone");let n=t.toString().replace(/present=(&|$)/,"present$1");return e+(n?`?${n}`:"")+location.hash}function V(){return x()||P()||new URLSearchParams(location.search).has("standalone")?!1:(location.replace(`${ge}?p=${encodeURIComponent(J())}`),!0)}function $(){b("page",{page:J(),title:document.title})}var ye={"\\R":"\\mathbb{R}","\\norm":"\\lVert #1 \\rVert","\\vs":"\\mathbf{s}","\\ve":"\\mathbf{e}","\\vx":"\\mathbf{x}","\\vy":"\\mathbf{y}","\\vp":"\\mathbf{p}","\\vv":"\\mathbf{v}","\\vJ":"\\mathbf{J}","\\vJh":"\\hat{\\mathbf{J}}","\\vq":"\\mathbf{q}","\\vr":"\\mathbf{r}","\\vu":"\\mathbf{u}","\\vd":"\\mathbf{d}","\\dq":"\\Delta\\mathbf{q}","\\dQ":"\\Delta\\mathbf{Q}","\\dS":"\\Delta\\mathbf{S}","\\ds":"\\Delta\\mathbf{s}","\\vphi":"\\boldsymbol{\\phi}","\\vpsi":"\\boldsymbol{\\psi}","\\vg":"\\mathbf{g}","\\vW":"\\mathbf{W}","\\vI":"\\mathbf{I}","\\Range":"\\operatorname{Range}","\\Null":"\\operatorname{Null}","\\Sym":"\\operatorname{Sym}","\\cond":"\\operatorname{cond}"};function be(e,t=!1){return window.katex.renderToString(e,{displayMode:t,macros:{...ye},throwOnError:!1,strict:"ignore"})}function O(e=document){for(let t of e.querySelectorAll(".tex, .tex-block"))t.dataset.rendered||(t.innerHTML=be(t.textContent,t.classList.contains("tex-block")),t.dataset.rendered="1")}var w=[{src:"audio/meditation-impromptu-01.mp3",title:"Kevin MacLeod, Meditation Impromptu 01 (CC BY 4.0)"},{src:"audio/gymnopedie1.mp3",title:"Erik Satie, Gymnop\xE9die No. 1 (Robin Alciatore)"},{src:"audio/clean-soul.mp3",title:"Kevin MacLeod, Clean Soul (CC BY 4.0)"},{src:"audio/gnossienne1.mp3",title:"Erik Satie, Gnossienne No. 1 (La Pianista)"},{src:"audio/light-thought-1.mp3",title:"Kevin MacLeod, Light Thought var 1 (CC BY 4.0)"},{src:"audio/meditation-impromptu-02.mp3",title:"Kevin MacLeod, Meditation Impromptu 02 (CC BY 4.0)"},{src:"audio/gnossienne3.mp3",title:"Erik Satie, Gnossienne No. 3 (La Pianista)"}],X="shape-servoing-music-position",xe=.3,we=(e,t)=>{try{sessionStorage.setItem(e,t)}catch{}},Ee=e=>{try{return sessionStorage.getItem(e)}catch{return null}};function Le(){let e=new Audio;e.preload="auto";let t=new Set,n=!1,r=!1,a=null,s=Math.floor(Math.random()*w.length),l=0;try{let o=JSON.parse(Ee(X)||"null");o&&Number.isInteger(o.track)&&w[o.track]&&(s=o.track,l=o.time||0)}catch{}let d=/^(\d+)-(\d+(?:\.\d+)?)$/.exec(new URLSearchParams(location.search).get("music")||"");d&&w[Number(d[1])]&&(s=Number(d[1]),l=Number(d[2]));let v=()=>t.forEach(o=>{try{o()}catch{t.delete(o)}});function h(o=0){e.src=w[s].src,o>0&&e.addEventListener("loadedmetadata",()=>{try{e.currentTime=Math.min(o,Math.max(0,e.duration-2))}catch{}},{once:!0})}function p(){e.src&&we(X,JSON.stringify({track:s,time:e.currentTime||0}))}function g(o,c,u){clearInterval(a);let y=e.volume,L=Math.max(1,Math.round(c/50)),S=0;a=setInterval(()=>{S+=1,e.volume=Math.min(1,Math.max(0,y+(o-y)*S/L)),S>=L&&(clearInterval(a),u&&u())},50)}async function m(o){e.volume=0;try{await e.play(),r=!1,g(xe,o)}catch{r=!0}v()}e.addEventListener("ended",()=>{s=(s+1)%w.length,h(0),n&&m(1500)}),window.addEventListener("pagehide",p),setInterval(()=>{e.paused||p()},2e3);let f={get on(){return n},get blocked(){return r},get playing(){return!e.paused},get title(){return w[s].title},get position(){return{track:s,time:e.currentTime||l}},toggle(){n=!n,n?(e.src||h(l),m(1500)):(p(),r=!1,g(0,500,()=>e.pause()),v())},gesture(){n&&r&&e.paused&&m(1500)},next(){if(!n)return;let o=()=>{s=(s+1)%w.length,h(0),m(800)};e.paused?o():g(0,300,o)},subscribe(o){return t.add(o),()=>t.delete(o)}};return d&&f.toggle(),f}function Se(){if(!x())return null;let e=new Set,t={on:!1,blocked:!1,playing:!1,title:""};return C("music",n=>{t={...t,...n.state},e.forEach(r=>r())}),b("music-hello"),{get on(){return t.on},get blocked(){return t.blocked},get playing(){return t.playing},get title(){return t.title},toggle(){b("music-do",{action:"toggle"})},gesture(){b("music-do",{action:"gesture"})},next(){b("music-do",{action:"next"})},subscribe(n){return e.add(n),()=>e.delete(n)}}}function z(e){if(!e)return;let t=Se()||Le(),n=document.createElement("button");n.type="button",n.className="button music-next",n.textContent="\u203A",n.setAttribute("aria-label","Next song"),n.addEventListener("click",()=>t.next()),e.after(n);function r(){n.hidden=!t.on,n.title=`Next song (now playing: ${t.title})`,e.setAttribute("aria-pressed",String(t.on)),e.classList.toggle("music-on",t.on),e.title=t.on?t.blocked?"Background music: on. Click anywhere on the page to start it.":`Background music: on, ${t.title}. Click to turn off.`:"Background music: off (click to play calm piano pieces, public domain and CC BY)"}e.addEventListener("click",()=>t.toggle());let a=l=>{l.target!==e&&l.target!==n&&t.gesture()};document.addEventListener("pointerdown",a,!0),document.addEventListener("keydown",a,!0);let s=t.subscribe(r);return window.addEventListener("pagehide",s),r(),t}var R="st",E=new Map;function ke(){try{return localStorage.setItem("shape-servoing-probe","1"),localStorage.removeItem("shape-servoing-probe"),!0}catch{return!1}}var k=ke();try{let e=new URLSearchParams(location.search).get(R);if(e){let t=atob(e.replace(/-/g,"+").replace(/_/g,"/"));for(let[n,r]of Object.entries(JSON.parse(decodeURIComponent(escape(t)))))if(typeof n=="string"&&typeof r=="string"&&(E.set(n,r),k))try{localStorage.setItem(n,r)}catch{}}}catch{}var U=()=>k;function _(e){if(k)try{return localStorage.getItem(e)}catch{return E.get(e)??null}return E.has(e)?E.get(e):null}function A(e,t){if(E.set(e,String(t)),k)try{localStorage.setItem(e,String(t))}catch{}}function D(){if(!E.size)return null;let e=unescape(encodeURIComponent(JSON.stringify(Object.fromEntries(E))));return btoa(e).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}var F=R;function j(){if(k){location.reload();return}let e=new URL(location.href),t=D();t?e.searchParams.set(R,t):e.searchParams.delete(R),location.replace(e.href)}var Q="shape-servoing-theme",q="shape-servoing-palette",Te=new Set,Z=null;function ee(e){e!=="dark"&&e!=="light"||document.documentElement.dataset.theme===e||(document.documentElement.dataset.theme=e,A(Q,e),Z=null,Te.forEach(t=>t()))}function te(){let e=_(Q),t=_(q),n=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=e==="dark"||e==="light"?e:n,t==="cvd"&&(document.documentElement.dataset.palette="cvd"),Z=null,x()&&(C("theme",({theme:r,palette:a})=>{ee(r),a==="cvd"!==M()&&(a==="cvd"||a==="default")&&(A(q,a),j())}),b("theme-hello"))}var M=()=>document.documentElement.dataset.palette==="cvd";function Pe(e){let t=e?"cvd":"default";A(q,t),b("theme",{theme:document.documentElement.dataset.theme,palette:t}),j()}function ne(e){e&&(e.setAttribute("aria-pressed",String(M())),e.addEventListener("click",()=>Pe(!M())))}function oe(){ee(document.documentElement.dataset.theme==="dark"?"light":"dark"),b("theme",{theme:document.documentElement.dataset.theme,palette:M()?"cvd":"default"})}var Ce=/^(index|guide|glossary|definitions|demo|player)\.html(\?[^#]*)?(#.*)?$/,T=null;function ae(e){let t=Ce.exec(e);if(!t||U())return e;let n=new URLSearchParams(t[2]||""),r=D();r?n.set(F,r):n.delete(F),T?.on&&T.position?n.set("music",`${T.position.track}-${T.position.time.toFixed(1)}`):n.delete("music");let a=n.toString().replace(/present=(&|$)/,"present$1");return`${t[1]}.html${a?`?${a}`:""}${t[3]||""}`}function re(e){location.href=ae(e)}function $e(){document.addEventListener("click",e=>{let t=e.target.closest?.("a[href]");if(!t||t.target==="_blank")return;let n=t.getAttribute("href"),r=ae(n);r!==n&&t.setAttribute("href",r)},!0)}async function se({math:e=!0}={}){V()&&await new Promise(()=>{}),$(),te(),document.getElementById("themeButton")?.addEventListener("click",oe),ne(document.getElementById("paletteButton")),T=z(document.getElementById("musicButton"))||null,U()||$e(),e&&window.katex&&O(document)}function i(e,t={},...n){let r=document.createElement(e);for(let[a,s]of Object.entries(t||{}))s==null||s===!1||(a==="class"?r.className=s:a==="style"?r.style.cssText=s:a==="html"?r.innerHTML=s:a.startsWith("on")?r.addEventListener(a.slice(2),s):r.setAttribute(a,s===!0?"":s));for(let a of n.flat())a==null||a===!1||r.append(a instanceof Node?a:document.createTextNode(String(a)));return r}var N=e=>String(e).padStart(2,"0"),ce="<Authors>",Re="<Authors>",le={details:"<publication details>",year:"<year>",entry:"misc",fields:{howpublished:"<publication details>"}},Ae=ce.startsWith("<"),Me="Shape Servoing of Deformable Objects: A Tutorial",Ie="Shape Servoing of Deformable Objects: A Tutorial",Be={1:"Level 1 \xB7 Fundamentals",2:"Level 2 \xB7 Advanced concepts"},de=e=>`Interactive demo ${N(e.number)}: ${e.title}`;function Ne(e){let{details:t,year:n}=le;return`${ce}, "${Me}," ${t}, ${n}.`+(e?` ${de(e)}.`:"")}function Oe(e){let{entry:t,year:n,fields:r}=le,a=[["author",Re],["title",Ie],...Object.entries(r),["year",n],...e?[["note",de(e)]]:[]],s=Math.max(...a.map(([l])=>l.length));return[`@${t}{shapeservoing_tutorial,`,...a.map(([l,d])=>`  ${l.padEnd(s)} = {${d}},`),"}"].join(`
+`)}function Ue(e){let t=e?`demo.html?id=${e.id}`:location.pathname.split("/").pop()||"index.html";return new URL(t==="index.html"?"player.html":`player.html?p=${encodeURIComponent(t)}`,location.href).href}async function _e(e,t){try{await navigator.clipboard.writeText(e)}catch{let n=i("textarea",{style:"position:fixed;opacity:0"});n.value=e,document.body.append(n),n.select(),document.execCommand("copy"),n.remove()}t.textContent="Copied \u2713",setTimeout(()=>{t.textContent="Copy"},1400)}function De(e=null){let t=(a,s)=>{let l=i("button",{class:"button small",type:"button"},"Copy");return l.addEventListener("click",()=>_e(s,l)),i("div",{class:"cite-block"},i("div",{class:"cite-block-head"},i("span",{},a),l),i("pre",{},s))},n=i("button",{class:"button",type:"button"},"Close"),r=i("dialog",{class:"cite-dialog","aria-labelledby":"citeTitle"},i("p",{class:"kicker"},e?`${Be[e.part]} \xB7 Demo ${N(e.number)}`:"Interactive tutorial"),i("h2",{id:"citeTitle"},e?"Cite this demo":"Cite the tutorial"),i("p",{class:"cite-note"},(Ae?"Author names and publication details are placeholders until the article appears. ":"")+"The link opens this page wherever the tutorial runs locally."),t("Link",Ue(e)),t("Citation",Ne(e)),t("BibTeX",Oe(e)),i("div",{class:"cite-actions"},n));n.addEventListener("click",()=>r.close()),r.addEventListener("click",a=>{let s=r.getBoundingClientRect();(a.clientX<s.left||a.clientX>s.right||a.clientY<s.top||a.clientY>s.bottom)&&r.close()}),r.addEventListener("close",()=>r.remove()),document.body.append(r),r.showModal()}function ue(e){let t=[...e.querySelectorAll("canvas")].filter(o=>o.clientWidth>0&&o.clientHeight>0);if(!t.length)return null;let n=12,r=t.map(o=>{let c=o.getBoundingClientRect();return{c:o,x:c.left+o.clientLeft,y:c.top+o.clientTop,w:o.clientWidth,h:o.clientHeight}}),a=[];for(let o of[...r].sort((c,u)=>c.y-u.y)){let c=a[a.length-1];c&&o.y<=c.y1?c.y1=Math.max(c.y1,o.y+o.h):a.push({y0:o.y,y1:o.y+o.h})}let s=n;for(let o of a)o.top=s,s+=o.y1-o.y0+n;for(let o of r){let c=a.find(u=>o.y>=u.y0&&o.y<u.y1+.5);o.y=c.top+o.y-c.y0}let l=Math.min(...r.map(o=>o.x))-n,d=Math.max(...r.map(o=>o.x+o.w))+n-l,v=s,h=Math.max(1,...t.map(o=>o.width/o.clientWidth)),p=document.createElement("canvas");p.width=2*Math.round(d*h/2),p.height=2*Math.round(v*h/2);let g=p.getContext("2d"),m=getComputedStyle(e).getPropertyValue("--surface").trim()||"#ffffff",f=()=>{g.setTransform(p.width/d,0,0,p.height/v,0,0),g.fillStyle=m,g.fillRect(0,0,d,v);for(let o of r)g.drawImage(o.c,o.x-l,o.y,o.w,o.h)};return f(),{canvas:p,draw:f}}function Fe(e,t){let n=URL.createObjectURL(e),r=e.type.startsWith("video/")?i("video",{src:n,controls:!0,class:"export-media"}):i("img",{src:n,alt:t,class:"export-media"}),a=i("button",{class:"button",type:"button"},"Close"),s=i("dialog",{class:"cite-dialog export-dialog","aria-label":t},i("h2",{},t),i("p",{class:"cite-note"},`This host does not allow downloads: right-click the ${e.type.startsWith("video/")?"video":"image"} and choose \u201CSave as\u201D to keep it.`),r,i("div",{class:"cite-actions"},a));a.addEventListener("click",()=>s.close()),s.addEventListener("close",()=>{s.remove(),URL.revokeObjectURL(n)}),document.body.append(s),s.showModal()}function pe(e,t){if(P()){Fe(e,t);return}let n=URL.createObjectURL(e),r=i("a",{href:n,download:t});document.body.append(r),r.click(),r.remove(),setTimeout(()=>URL.revokeObjectURL(n),4e3)}function je(e,t){ue(e)?.canvas.toBlob(n=>n&&pe(n,`${t}.png`),"image/png")}var qe=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4"],me=60,Y=()=>window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream?qe.find(e=>MediaRecorder.isTypeSupported(e)):void 0,B=null;function We(e,t){let n=Y(),r=ue(e);if(!n||!r)return;let a=new MediaRecorder(r.canvas.captureStream(30),{mimeType:n,videoBitsPerSecond:8e6}),s=[];a.ondataavailable=f=>{f.data.size&&s.push(f.data)};let l=i("span",{},"REC 0:00"),d=i("button",{class:"rec-pill",type:"button",title:"Stop recording and save the video"},i("i",{class:"rec-dot","aria-hidden":"true"}),l,i("span",{class:"rec-stop"},"Stop")),v=performance.now(),h=0,p=()=>{r.draw(),h=requestAnimationFrame(p)},g=setInterval(()=>{let f=Math.floor((performance.now()-v)/1e3);l.textContent=`REC ${Math.floor(f/60)}:${N(f%60)}`,f>=me&&m()},250);function m(){a.state!=="inactive"&&a.stop()}a.onstop=()=>{cancelAnimationFrame(h),clearInterval(g),d.remove(),B=null,pe(new Blob(s,{type:n}),`${t}.${n.startsWith("video/mp4")?"mp4":"webm"}`)},d.addEventListener("click",m),document.body.append(d),p(),a.start(500),B={stop:m}}var W=()=>document.documentElement.classList.contains("teaching");function fe(){try{if(window.top!==window&&window.top.document.fullscreenEnabled)return window.top.document}catch{}return null}async function Ye(){for(let e of[fe(),document])if(e)try{await e.documentElement.requestFullscreen();return}catch{}}function He(){for(let e of[fe(),document])try{e?.fullscreenElement&&e.exitFullscreen()}catch{}}function ie(e,t){let n=new URL(e,location.href);return t?n.searchParams.set("present",""):n.searchParams.delete("present"),n}function I(e,{fullscreen:t=!0}={}){document.documentElement.classList.toggle("teaching",e);try{history.replaceState(null,"",ie(location.href,e))}catch{}$();for(let n of document.querySelectorAll('a[href^="demo.html?id="]'))n.setAttribute("href",`demo.html${ie(n.getAttribute("href"),e).search}`);t&&(e?Ye():He())}function he(e,{demo:t=null,workspace:n=null}={}){if(!e)return;let r=i("span",{class:"tools"});e.replaceWith(r);let a=i("div",{class:"tools-menu",role:"menu",id:"toolsMenu",hidden:!0,"aria-label":"More options"});r.append(e,a),e.setAttribute("aria-haspopup","menu"),e.setAttribute("aria-controls","toolsMenu"),e.setAttribute("aria-expanded","false");let s=t?`shape-servoing-demo-${N(t.number)}-${t.id}`:"shape-servoing",l=location.pathname.split("/").pop(),d=(o,c,u,{checked:y,title:L,disabled:S=!1}={})=>{let H=i("button",{type:"button",role:y===void 0?"menuitem":"menuitemcheckbox","aria-checked":y===void 0?null:String(y),title:L,disabled:S,tabindex:"-1"},i("span",{class:"tools-icon","aria-hidden":"true"},o),i("span",{},c));return H.addEventListener("click",()=>{m(),u()}),H};function v(){let o=[d("\u275D",t?"Cite this demo\u2026":"Cite the tutorial\u2026",()=>De(t))];if(t&&n){let u=!!n.querySelector("canvas");o.push(d("\u2913","Save figure (PNG)",()=>je(n,s),{disabled:!u,title:"The canvases of this demo as one image, without the controls"}),B?d("\u25A0","Stop recording",()=>B?.stop()):d("\u25CF","Record animation",()=>We(n,s),{disabled:!u||!Y(),title:Y()?`Record the canvases as a video (up to ${me} s); stop with the REC button`:"Video recording is not supported by this browser"}),d("\u26F6","Teaching mode",()=>I(!W()),{checked:W(),title:"Larger demo without the lesson, for lectures and screen sharing (Esc to leave)"}))}let c=[["\u2261","Glossary","glossary.html"],["\u2202","Useful definitions","definitions.html"]].filter(([,,u])=>u!==l);o.push(i("hr"),...c.map(([u,y,L])=>d(u,y,()=>re(L)))),a.replaceChildren(...o)}let h=()=>[...a.querySelectorAll("button:not(:disabled)")],p=o=>{r.contains(o.target)||m()};function g(){v(),a.hidden=!1,e.setAttribute("aria-expanded","true"),document.addEventListener("pointerdown",p),h()[0]?.focus()}function m(o=!1){a.hidden||(a.hidden=!0,e.setAttribute("aria-expanded","false"),document.removeEventListener("pointerdown",p),o&&e.focus())}if(e.addEventListener("click",()=>a.hidden?g():m()),a.addEventListener("keydown",o=>{let c=h(),u=c.indexOf(document.activeElement),y={ArrowDown:u+1,ArrowUp:u-1,Home:0,End:c.length-1};o.key in y?(o.preventDefault(),c[(y[o.key]+c.length)%c.length]?.focus()):o.key==="Escape"?(o.preventDefault(),o.stopPropagation(),m(!0)):o.key==="Tab"&&m()}),!t)return;let f=i("button",{class:"button small teaching-exit",type:"button",title:"Leave teaching mode (Esc)"},"\u2715 Exit teaching mode");f.addEventListener("click",()=>I(!1)),r.before(f),new URLSearchParams(location.search).has("present")&&I(!0,{fullscreen:!1}),document.addEventListener("keydown",o=>{o.key==="Escape"&&W()&&a.hidden&&!document.querySelector("dialog[open]")&&I(!1)})}await se();he(document.getElementById("toolsButton"));
+})();
+</script>
+</body>
+</html>

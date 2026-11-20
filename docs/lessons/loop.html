@@ -1,0 +1,25 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>Given the estimate <span class="tex">\vJh</span>, the controller maps the shape error to a robot velocity using the Moore–Penrose pseudoinverse:</p>
+    <div class="tex-block">\vu=\alpha\,\vJh^{+}\ve,</div>
+    <p>where <span class="tex">\alpha>0</span> is the control gain. Under the estimated model, this command yields the feature velocity <span class="tex">\vJh\vu=\alpha\,\vJh\vJh^{+}\ve</span>, the orthogonal projection of <span class="tex">\alpha\ve</span> onto <span class="tex">\Range(\vJh)</span>. When <span class="tex">n>m</span> and <span class="tex">\vJh</span> has full column rank, as here, <span class="tex">\vJh^{+}=(\vJh^{\top}\vJh)^{-1}\vJh^{\top}</span>, and the command minimizes the least-squares error in feature space.</p>
+    <p>At iteration <span class="tex">k</span>, the robot applies <span class="tex">\vu_k=\alpha\,\vJh_k^{+}\ve_k</span> over one control period, producing <span class="tex">\dq_k=\vu_k\Delta t</span>. Each command and the measured feature change form an action–response pair, so the loop generates the data needed to update the estimate without additional probing. With the prediction error <span class="tex">\vr_k=\ds_k-\vJh_{k-1}\dq_{k-1}</span>, Broyden's rule corrects the estimate as</p>
+    <div class="tex-block">\vJh_k=\vJh_{k-1}+\frac{\vr_k\,\dq_{k-1}^{\top}}{\dq_{k-1}^{\top}\dq_{k-1}}.</div>
+    <p>The update enforces the secant relation <span class="tex">\vJh_k\dq_{k-1}=\ds_k</span> with the smallest Frobenius-norm change to <span class="tex">\vJh_{k-1}</span>. The correction has magnitude <span class="tex">\norm{\vr_k}/\norm{\dq_{k-1}}</span>, so practical implementations skip the update below a minimum <span class="tex">\norm{\dq_{k-1}}</span> and reject implausibly large corrections.</p>
+    <p>With the exact Jacobian, the error decays as <span class="tex">(1-\alpha\Delta t)^k</span>. The running example uses <span class="tex">\Delta t=1</span>, so the dotted line in the error plot is <span class="tex">(1-\alpha)^k</span>.</p>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li>Press <em>Run</em> with <span class="tex">\alpha=0.05</span> and the online update on: the error closely follows the nominal decay and converges.</li>
+        <li>Press <em>Reset</em>, switch the online update off, and run again. With <span class="tex">\vJh_0</span> held fixed, the error does not converge and ends above its initial value, because <span class="tex">\vJh_0</span> no longer gives a descent direction once the rod has moved away from the configuration where it was identified.</li>
+        <li>Set <span class="tex">\alpha=0.35</span>: larger motions leave the region where the local model is accurate, and the error first rises above its initial value before converging.</li>
+        <li>Press <em>Step</em> to execute one iteration of Algorithm 1 line by line, including the rank-one correction of the estimate.</li>
+        <li>Pause, drag the grippers to a new shape, and choose <em>Record current</em>: the target is now specified by demonstration, and the run restarts from <span class="tex">\vq_0</span>.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>The loop alternates between updating the local Jacobian estimate and using it for feedback. The online update keeps the estimate representative as the object deforms, and the gain must keep each motion within the region where the estimate is accurate.</p>
+</section>

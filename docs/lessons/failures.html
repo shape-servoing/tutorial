@@ -1,0 +1,33 @@
+<section class="lesson-block">
+    <p class="lesson-kicker">In the tutorial</p>
+    <p>The loop relies on three conditions: robot motion must deform the object, the selected features must change as the object deforms, and the local quasistatic relation between robot motion and shape must remain well defined. The factorization</p>
+    <div class="tex-block">\vJ=\frac{\partial \vs}{\partial \vx}\,\frac{\partial \vx}{\partial \vq}</div>
+    <p>separates the first two. A <em>controllability failure</em>, or loss of control authority, occurs when <span class="tex">\partial\vx/\partial\vq</span> loses rank, so that robot motion along some direction no longer deforms the object; an <em>observability failure</em>, or loss of shape sensitivity, occurs when a motion of the object lies in the null space of <span class="tex">\partial\vs/\partial\vx</span>. Because the loop estimates only the product <span class="tex">\vJ</span>, both produce the same measured pairs, <span class="tex">\dq_{k-1}\neq\mathbf{0}</span> with <span class="tex">\ds_k\approx\mathbf{0}</span>, although their remedies differ.</p>
+    <p><b>Controllability.</b> The corresponding singular value approaches zero: <span class="tex">\sigma_{\min}\to0</span>, <span class="tex">w\to0</span>, and the condition number grows, so the factor <span class="tex">1/\sigma_{\min}</span> in the pseudoinverse produces large robot commands along a direction in which robot motion barely deforms the object. The damped least-squares inverse <span class="tex">\vJh^{\top}(\vJh\vJh^{\top}+\mu^2\mathbf{I})^{-1}</span> limits the gain of each inverted direction to at most <span class="tex">1/(2\mu)</span>. In the running example, as the rod is pulled taut, <span class="tex">\sigma_{\min}</span> of the exact Jacobian falls from 0.15 to 0.04 at 20% extension, <span class="tex">w</span> by a factor of 21, the condition number rises from 16 to 42, and <span class="tex">\vpsi_{\min}</span>, a unit vector, becomes increasingly a wrist rotation: the squares of its two wrist entries sum to 0.68 at the rest length and to 0.78 at 20% extension.</p>
+    <p><b>Observability.</b> Changes in the object are not reflected in the measured features, because of the feature representation itself (an invariance) or of perception (e.g., occlusion). The consequences range from negligible, such as an unobserved rigid translation with curvature-based features, to mechanically critical: unobserved stretching can reduce control authority, and an unobserved axial twist of an untextured rod can accumulate torsional strain until the rod forms a loop (pigtailing), a mechanical instability.</p>
+    <p><b>Mechanical instability.</b> A strictly stable equilibrium minimizes the potential energy <span class="tex">\Pi(\vx;\vq)</span> with a positive-definite Hessian <span class="tex">\boldsymbol{\Pi}_{\vx\vx}</span>. As the object is loaded, its stiffness along one deformation mode may decrease until the smallest Hessian eigenvalue vanishes,</p>
+    <div class="tex-block">\lambda_{\min}\!\big(\boldsymbol{\Pi}_{\vx\vx}\big)\;\to\;0,</div>
+    <p>Beyond this critical point, snap-through may produce a discontinuous transition, or under buckling the object follows another branch; the local relation <span class="tex">\dot{\vs}=\vJ\vu</span> fails at the transition. A very small <span class="tex">\dq_{k-1}</span> may then produce a large <span class="tex">\ds_k</span> and an abnormally large Broyden correction: the loop should reject such samples and re-estimate after the transition. In the running example, the smallest Hessian eigenvalue of the straight rod crosses zero at 5.8% compression.</p>
+    <table class="lesson-table" id="failureTable">
+        <thead><tr><th>Failure</th><th>Underlying cause</th><th>Observable signature</th><th>Mitigation</th></tr></thead>
+        <tbody>
+            <tr data-tab="ctrl"><td>Controllability</td><td><span class="tex">\partial\vx/\partial\vq</span> loses rank</td><td>weak singular directions; <span class="tex">\dq\neq\mathbf{0}</span>, <span class="tex">\ds\approx\mathbf{0}</span></td><td>damped inverse; monitor <span class="tex">\sigma_{\min}</span> and <span class="tex">w</span></td></tr>
+            <tr data-tab="obs"><td>Observability</td><td>motion in <span class="tex">\Null(\partial\vs/\partial\vx)</span></td><td>weak singular directions; <span class="tex">\dq\neq\mathbf{0}</span>, <span class="tex">\ds\approx\mathbf{0}</span></td><td>change feature map or viewpoint</td></tr>
+            <tr data-tab="inst"><td>Mechanical instability</td><td>quasistatic equilibrium loses regularity</td><td>small <span class="tex">\norm{\dq}</span> with large or poorly predicted <span class="tex">\norm{\ds}</span></td><td>gate updates; re-estimate or avoid the transition</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section class="lesson-block">
+    <p class="lesson-kicker">Try this</p>
+    <ol class="missions">
+        <li><em>Controllability</em>: drag the extension from 0 to 20% and observe <span class="tex">\sigma_{\min}</span>, <span class="tex">w</span>, the condition number, and the wrist share of <span class="tex">\vpsi_{\min}</span>.</li>
+        <li>Compare the pseudoinverse gains <span class="tex">1/\sigma_l</span> with the damped gains <span class="tex">\sigma_l/(\sigma_l^2+\mu^2)</span>, capped at <span class="tex">1/(2\mu)</span>.</li>
+        <li><em>Observability</em>: run the three motions. The wrist motion of the taut rod and the rigid translation seen through curvature-based features give the same observable signature.</li>
+        <li><em>Mechanical instability</em>: compress past 5.8%, where the straight rod's <span class="tex">\lambda_{\min}</span> crosses zero. Then rotate the wrists of the arch slowly: <span class="tex">\lambda_{\min}</span> of the current equilibrium approaches zero and the rod snaps through, with a spike of the response ratio.</li>
+    </ol>
+</section>
+
+<section class="lesson-block takeaway">
+    <p>The singular values of <span class="tex">\vJh_k</span>, the prediction error <span class="tex">\vr_k</span>, and the response ratio <span class="tex">\norm{\ds_k}/\norm{\dq_{k-1}}</span> can indicate these failures, but none of them separates ineffective actuation from an uninformative feature representation; that requires information from outside the Jacobian estimate.</p>
+</section>
